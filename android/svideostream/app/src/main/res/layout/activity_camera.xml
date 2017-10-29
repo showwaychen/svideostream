@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+<SurfaceView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/sv_display"/>
+    <RelativeLayout android:id="@+id/rl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingTop="17dp"
+        android:paddingBottom="17dp">
+
+            <CheckBox
+                android:id="@+id/cb_cameraswitch"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_margin="5dp"
+                android:layout_alignParentRight="true"
+                android:gravity="center"
+                android:background="@color/white"
+                android:button="@null"
+                android:text="前"
+                />
+        <CheckBox
+            android:id="@+id/cb_light"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_margin="5dp"
+            android:layout_toLeftOf="@id/cb_cameraswitch"
+            android:gravity="center"
+            android:background="@color/white"
+            android:button="@null"
+            android:text="开"
+            />
+
+        </RelativeLayout>
+
+    <RelativeLayout android:id="@+id/rl_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:padding="20dp" >
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <CheckBox
+                android:id="@+id/cb_record"
+                android:layout_width="70dp"
+                android:layout_height="30dp"
+                android:layout_marginRight="20dp"
+                android:gravity="center"
+                android:background="@color/white"
+                android:button="@null"
+                android:text="开始录制"
+                />
+            <CheckBox
+                android:id="@+id/cb_live"
+                android:layout_width="70dp"
+                android:layout_height="30dp"
+                android:gravity="center"
+                android:background="@color/white"
+                android:button="@null"
+                android:text="开始直播"
+                />
+        </LinearLayout>
+        </RelativeLayout>
+</RelativeLayout>
