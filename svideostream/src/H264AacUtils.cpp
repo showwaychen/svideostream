@@ -8,6 +8,7 @@ int CH264AacUtils::GetFrameSize(ImageFormat format, int stride, int height)
 	switch (format) {
 	case IMAGE_FORMAT_NV12:
 	case IMAGE_FORMAT_NV21:
+	case IMAGE_FORMAT_I420:
 		return (stride * height * 3) / 2;
 
 	case IMAGE_FORMAT_ARGB:

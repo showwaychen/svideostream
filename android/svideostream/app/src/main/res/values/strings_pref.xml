@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pref_title_general">General</string>
+    <string name="pref_title_audioenable">Audio Enable</string>
+    <string name="pref_key_audioenable">pref.audioenable</string>
+    <string name="pref_audioenable_default">true</string>
+
+    <string name="pref_title_videoencoder">VideoEncoder</string>
+    <string name="pref_key_videoencodertype">pref.videoencodertype</string>
+    <string name="pref_videoencodertype_title">VideoEncoder Type</string>
+    <string name="pref_videoencodertype_dlg">Select Video Encoder Type.</string>
+    <string name="pref_videoencodertype_default">X264</string>
+    <string name="videoencodertype_X264">X264</string>
+    <string name="videoencodertype_MediaCodec">MediaCodec</string>
+    <string-array name="pref_entries_videoencoder">
+        <item >@string/videoencodertype_X264</item>
+        <item>@string/videoencodertype_MediaCodec</item>
+    </string-array>
+    <string-array name="pref_entry_values_videoencoder">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+    <string name="pref_key_videoencodebitrate">pref.videoencodebitrate</string>
+    <string name="pref_videoencodebitrate_title">Video BitRate</string>
+    <string-array name="pref_entries_videobitrate">
+        <item >6mbps</item>
+        <item>4mbps</item>
+        <item>2mbps</item>
+        <item>1mbps</item>
+        <item>800kbps</item>
+        <item>600kbps</item>
+        <item>500kbps</item>
+        <item>400kbps</item>
+        <item>300kbps</item>
+        <item>200kbps</item>
+    </string-array>
+    <string-array name="pref_entries_videobitratevalue">
+        <item >6000000</item>
+        <item>4000000</item>
+        <item>2000000</item>
+        <item>1000000</item>
+        <item>800000</item>
+        <item>600000</item>
+        <item>500000</item>
+        <item>400000</item>
+        <item>300000</item>
+        <item>200000</item>
+    </string-array>
+
+    <string name="pref_key_videoencodefps">pref.videoencodefps</string>
+    <string name="pref_videoencodefps_title">Video Fps</string>
+    <string-array name="pref_entries_videofps">
+        <item >30 fps</item>
+        <item>25 fps</item>
+        <item>20 fps</item>
+        <item>15 fps</item>
+        <item>12 fps</item>
+    </string-array>
+    <string-array name="pref_entries_videofpsvalue">
+        <item >30</item>
+        <item>25</item>
+        <item>20</item>
+        <item>15</item>
+        <item>12</item>
+    </string-array>
+</resources>

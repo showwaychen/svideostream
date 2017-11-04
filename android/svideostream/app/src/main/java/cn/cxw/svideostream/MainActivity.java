@@ -8,6 +8,8 @@ import android.view.View;
 import android.widget.Toast;
 
 import cn.cxw.svideostream.activities.CameraActivity;
+import cn.cxw.svideostream.activities.SettingActivity;
+import cn.cxw.svideostream.application.Setting;
 import cn.cxw.svideostream.utils.PermissionCheck;
 
 public class MainActivity extends AppCompatActivity {
@@ -25,6 +27,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 CameraActivity.Show(MainActivity.this);
+//                                SettingActivity.showActivity(MainActivity.this);
+
+            }
+        });
+        findViewById(R.id.tv_setting).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                 Toast.makeText(MainActivity.this, "" + (new Setting(MainActivity.this.getApplicationContext())).getAudioEnable(), Toast.LENGTH_LONG).show();
+                SettingActivity.showActivity(MainActivity.this);
             }
         });
     }

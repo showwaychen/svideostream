@@ -6,11 +6,13 @@
 #include "../src/Log.h"
 #include "../src/AudioEncoderFdkaac.h"
 #include "../src/VideoEncoderX264.h"
+#include "VideoEncoderMediaCodec.h"
 JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
 	JNIEnv *env = NULL;
 
 	SetJavaVM(vm);
+	LOGI << "version : "<<VERSION;
 	CCommonSetting::SetLogLevel(rtc::LS_SENSITIVE);
 	if (0 == on_JNI_OnLoad(GetJavaVM(), JNI_VERSION_1_6))
 	{
@@ -37,6 +39,8 @@ static JNINativeMethod ls_nm[] = {
 	&CSVideoStream_JniWrap::nativeSetSrcImageParams) },
 	{ "nativeSetDstParams", "(II)V", reinterpret_cast<void*>(
 	&CSVideoStream_JniWrap::nativeSetDstParams) },
+	{ "nativeSetVideoEncoderType", "(I)V", reinterpret_cast<void*>(
+	&CSVideoStream_JniWrap::nativeSetEncoderType) },
 	{ "nativeSetVideoEncodeParams", "(II)V", reinterpret_cast<void*>(
 	&CSVideoStream_JniWrap::nativeSetVideoEncodeParams) },
 	{ "nativeSetAudioParams", "(IIII)V", reinterpret_cast<void*>(
@@ -133,6 +137,15 @@ void JNICALL CSVideoStream_JniWrap::nativeSetDstParams(JNIEnv *env, jobject thiz
 	if (instance != nullptr)
 	{
 		instance->m_pVideoStream->SetDstSize(width, height);
+	}
+}
+
+void JNICALL CSVideoStream_JniWrap::nativeSetEncoderType(JNIEnv* env, jobject thiz, jint type)
+{
+	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz);
+	if (instance != nullptr)
+	{
+		instance->SetVideoEncoderType((VideoEncoderType)type);
 	}
 }
 
@@ -234,7 +247,14 @@ int CSVideoStream_JniWrap::StartStream()
 	}
 	if (m_pVideoEncoder == nullptr)
 	{
-		m_pVideoEncoder = new CVideoEncoderX264();
+		if (m_eVideoEncoderType == H264ENCODER_X264)
+		{
+			m_pVideoEncoder = new CVideoEncoderX264();
+		}
+		else
+		{
+			m_pVideoEncoder = new CVideoEncoderMediaCodec;
+		}
 	}
 
 	m_pVideoStream->SetAudioCodec(m_pAudioEncoder);

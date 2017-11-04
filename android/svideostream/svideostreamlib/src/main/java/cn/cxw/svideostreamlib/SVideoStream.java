@@ -18,6 +18,7 @@ public class SVideoStream implements AudioRecorder.Listener {
     native void nativeSetSrcImageParams(int format, int stride, int width ,int height);
     native void nativeSetDstParams(int width, int height);
     native void nativeSetRotation(int rotation);
+    native void nativeSetVideoEncoderType(int type);
     native void nativeSetVideoEncodeParams(int bitrate, int fps);
     native void nativeSetAudioParams(int samplerate, int channels, int samplesize, int bitrate);
     native void nativeSetPublishUrl(String url);
@@ -187,7 +188,14 @@ public class SVideoStream implements AudioRecorder.Listener {
         }
         mIsPaused = false;
     }
-
+    public void setVideoEncoderType(int type)
+    {
+        if (type != VideoStreamConstants.H264ENCODER_MEDIACODEC && type != VideoStreamConstants.H264ENCODER_X264)
+        {
+            return ;
+        }
+        nativeSetVideoEncoderType(type);
+    }
     public void SetVideoEncodeParams(int bitrate, int fps)
     {
         m_Bitrate = bitrate;

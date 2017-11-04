@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory
+        android:title="@string/pref_title_general">
+        <CheckBoxPreference
+            android:key="@string/pref_key_audioenable"
+            android:title="@string/pref_title_audioenable"
+            android:defaultValue="@string/pref_audioenable_default" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/pref_title_videoencoder">
+        <cn.cxw.svideostream.preference.SvsListPreference
+            android:key="@string/pref_key_videoencodertype"
+            android:title="@string/pref_videoencodertype_title"
+            android:defaultValue="0"
+            android:summary="@string/pref_videoencodertype_default"
+            android:dialogTitle="@string/pref_videoencodertype_dlg"
+            android:entries="@array/pref_entries_videoencoder"
+            android:entryValues="@array/pref_entry_values_videoencoder"
+            app:entrySummaries="@array/pref_entries_videoencoder"
+            />
+
+        <cn.cxw.svideostream.preference.SvsListPreference
+            android:key="@string/pref_key_videoencodebitrate"
+            android:title="@string/pref_videoencodebitrate_title"
+            android:defaultValue="600000"
+            android:summary="600kbps"
+            android:entries="@array/pref_entries_videobitrate"
+            android:entryValues="@array/pref_entries_videobitratevalue"
+            app:entrySummaries="@array/pref_entries_videobitrate"
+            />
+        <cn.cxw.svideostream.preference.SvsListPreference
+            android:key="@string/pref_key_videoencodefps"
+            android:title="@string/pref_videoencodefps_title"
+            android:defaultValue="15"
+            android:summary="15 fps"
+            android:entries="@array/pref_entries_videofps"
+            android:entryValues="@array/pref_entries_videofpsvalue"
+            app:entrySummaries="@array/pref_entries_videofps"
+            />
+    </PreferenceCategory>
+</PreferenceScreen>

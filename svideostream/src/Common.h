@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include"string.h"
+#define VERSION		"1.3"
 
 class sH264CodecInfo
 {
@@ -62,7 +63,8 @@ enum ImageFormat
 	IMAGE_FORMAT_ARGB,
 	IMAGE_FORMAT_RGBA,
 	IMAGE_FORMAT_ABGR,
-	IMAGE_FORMAT_BGRA
+	IMAGE_FORMAT_BGRA,
+	IMAGE_FORMAT_I420
 };
 
 #endif

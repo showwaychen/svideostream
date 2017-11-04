@@ -6,6 +6,8 @@
     cpu: ARMv7a
     camera recording
 	camera rtmp living
+	H264: x264 Android MediaCodec
+	AAC: fdkaac
 
 ###  Build
     export NDKROOT=  your ndk root path

@@ -1,7 +1,14 @@
 <resources>
+    <style name="Widget.App.ActionButton" parent="@style/Widget.AppCompat.ActionButton">
+        <item name="textAllCaps">false</item>
+    </style>
+    <style name="Theme.App.Light.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
 
+        <item name="actionButtonStyle">@style/Widget.App.ActionButton</item>
+    </style>
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.App.Light.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>

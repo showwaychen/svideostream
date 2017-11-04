@@ -3,7 +3,6 @@ package cn.cxw.svideostreamlib;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.SurfaceHolder;
 
 import cn.cxw.svideostreamlib.Camera.CameraInfo;
@@ -41,6 +40,7 @@ public class CameraVideoStream implements Camera.PreviewCallback{
     private int mCameraFacing;
     private int mCameraId;
     SVideoStream mSVideoStream = null;
+    VideoStreamSetting mSetting = new VideoStreamSetting();
     private static final int NO_CAMERA = -1;
     public CameraVideoStream()
     {
@@ -234,6 +234,10 @@ public class CameraVideoStream implements Camera.PreviewCallback{
         mSVideoStream.SetStreamType(VideoStreamConstants.ST_LIVE);
         mSVideoStream.SetPublishUrl(url);
     }
+    public void setVideoStreamSetting(VideoStreamSetting setting)
+    {
+        mSetting = setting;
+    }
     public int startStream()
     {
         if (!isPreview())
@@ -244,8 +248,10 @@ public class CameraVideoStream implements Camera.PreviewCallback{
         int ret = 0;
         mSVideoStream.SetSrcImageParams(VideoStreamConstants.IMAGE_FORMAT_NV21, cameraSize.width, cameraSize.width, cameraSize.height);
         mSVideoStream.SetRotation((cameraOrientation == CameraInfo.CAMERA_PORTRAIT)?VideoStreamConstants.kRotate90:VideoStreamConstants.kRotate0);
-        mSVideoStream.SetAudioEnable(true);
-        mSVideoStream.SetVideoEncodeParams(600000, 20);
+        mSVideoStream.SetAudioEnable(mSetting.getAudioEnable());
+        mSVideoStream.setVideoEncoderType(mSetting.getVideoEncoderType());
+
+        mSVideoStream.SetVideoEncodeParams(mSetting.getVideoBitrate(), mSetting.getVideoFps());
         ret = mSVideoStream.StartStream();
         return ret;
     }

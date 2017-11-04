@@ -369,7 +369,11 @@ int CFFmpegMux::WriteAudioData(uint8_t* vdata, int nsize, int64_t npts)
 	if (npts < 0) {
 		return -1;
 	}
-	//LOGI << "audio packet size = " << nsize << " npt =  " << npts<<" time_base = "<<m_pAudioStream->time_base.den;
+	if (!m_bWaitAudioSpecData || !m_bWaitVideoSpecData)
+	{
+		return 0;
+	}
+	LOGI << "audio packet size = " << nsize << " npt =  " << npts<<" time_base = "<<m_pAudioStream->time_base.den;
 
 	m_pktAudio.data = vdata;
 	m_pktAudio.size = nsize;

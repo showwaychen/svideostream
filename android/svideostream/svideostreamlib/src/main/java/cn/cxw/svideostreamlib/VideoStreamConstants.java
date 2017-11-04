@@ -5,6 +5,7 @@ package cn.cxw.svideostreamlib;
  */
 
 public class VideoStreamConstants {
+    public static final  String VersionCode = "1.3";
     //stream type
     public  static int ST_LIVE = 1;
     public static int ST_RECORD = 2;
@@ -27,7 +28,8 @@ public class VideoStreamConstants {
     public static int IMAGE_FORMAT_ARGB = 3;
     public static int IMAGE_FORMAT_RGBA = 4;
     public static int IMAGE_FORMAT_ABGR = 5;
-    public static int IMAGE_FORMAT_BGRA = 5;
+    public static int IMAGE_FORMAT_BGRA = 6;
+    public static int IMAGE_FORMAT_I420 = 7;
 
 
     //video encode type
