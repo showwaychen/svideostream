@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include"string.h"
-#define VERSION		"1.3"
+#define VERSION		"1.4"
 
 class sH264CodecInfo
 {
@@ -51,9 +51,23 @@ enum RotationMode
 	kRotate180 = 180,  // Rotate 180 degrees.
 	kRotate270 = 270,  // Rotate 270 degrees clockwise.
 };
+enum StreamError
+{
+	kSE_NoneError = 0,
+	kSE_UnknowError,
+	kSE_VideoEncoderOpenedFailed ,
+	kSE_AudioeEncoderOpenedFailed,
+	kSE_LiveConnectFailed,
+	kSE_RecordOpenFileFailed
+};
 enum StreamEvent
 {
-
+	SE_LiveConnected =0,
+	SE_LiveDisconnected,
+	SE_RecordStartedSuccess,
+	SE_StreamWarning,
+	SE_StreamFailed,
+	SE_StreamStarted
 };
 enum ImageFormat
 {

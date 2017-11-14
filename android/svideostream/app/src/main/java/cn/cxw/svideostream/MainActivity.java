@@ -2,14 +2,15 @@ package cn.cxw.svideostream;
 
 import android.Manifest;
 import android.content.Context;
-import android.support.v7.app.AppCompatActivity;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Toast;
 
-import cn.cxw.svideostream.activities.CameraActivity;
+import cn.cxw.svideostream.activities.GPUImageExCameraActivity;
+import cn.cxw.svideostream.activities.ScreenCaptureActivity;
 import cn.cxw.svideostream.activities.SettingActivity;
-import cn.cxw.svideostream.application.Setting;
 import cn.cxw.svideostream.utils.PermissionCheck;
 
 public class MainActivity extends AppCompatActivity {
@@ -19,14 +20,20 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         InitView();
-        PermissionCheck.Check(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        PermissionCheck.Check(this, Manifest.permission.WRITE_EXTERNAL_STORAGE, PermissionCheck.MY_PERMISSIONS_REQUEST_OK);
     }
     void InitView()
     {
         findViewById(R.id.tv_camera).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                CameraActivity.Show(MainActivity.this);
+                if (PermissionCheck.Check(MainActivity.this, Manifest.permission.CAMERA, PermissionCheck.MY_PERMISSIONS_REQUEST_OK) == PermissionCheck.AUTHPERMISSION)
+                {
+                    GPUImageExCameraActivity.Show(MainActivity.this);
+
+//                    startActivity(v.getId());
+                }
+//                CameraActivity.Show(MainActivity.this);
 //                                SettingActivity.showActivity(MainActivity.this);
 
             }
@@ -38,6 +45,32 @@ public class MainActivity extends AppCompatActivity {
                 SettingActivity.showActivity(MainActivity.this);
             }
         });
+        findViewById(R.id.tv_screen).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ScreenCaptureActivity.Show(MainActivity.this);
+            }
+        });
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        if(permissions[0].compareTo(Manifest.permission.CAMERA) == 0)
+        {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+            {
+                GPUImageExCameraActivity.Show(MainActivity.this);
+//                startActivity(requestCode);
+            }
+            else
+            {
+                Toast.makeText(this, "需要摄像头权限", Toast.LENGTH_LONG).show();
+            }
+            PermissionCheck.Check(this, Manifest.permission.RECORD_AUDIO, PermissionCheck.MY_PERMISSIONS_REQUEST_OK);
+        }
+        if (requestCode != PermissionCheck.MY_PERMISSIONS_REQUEST_OK)
+        {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
     }
     private long mPreClickTime;
     public static void AppExit(Context context) {
@@ -46,6 +79,15 @@ public class MainActivity extends AppCompatActivity {
             android.os.Process.killProcess(android.os.Process.myPid());
             System.exit(1);
         } catch (Exception e) {
+        }
+    }
+    void startActivity(int viewid)
+    {
+        switch (viewid)
+        {
+            case R.id.tv_camera:
+                GPUImageExCameraActivity.Show(this);
+                break;
         }
     }
     @Override

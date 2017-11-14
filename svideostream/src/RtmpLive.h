@@ -25,7 +25,8 @@ public:
 		LE_CONNECTED_SUCCESS,
 		LE_LIVE_ERROR,
 		LE_LIVE_STOP,
-		LE_NEED_KEYFRAME
+		LE_NEED_KEYFRAME,
+		LE_DISCONNECTED
 	};
 	class ILiveEventObserver
 	{

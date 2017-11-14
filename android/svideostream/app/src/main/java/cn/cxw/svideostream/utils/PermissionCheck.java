@@ -1,8 +1,6 @@
 package cn.cxw.svideostream.utils;
 
-import android.Manifest;
 import android.app.Activity;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -19,7 +17,7 @@ public class PermissionCheck {
 
     public static final int MY_PERMISSIONS_REQUEST_OK = 1;
 
-    public static int Check(Activity context, String permission)
+    public static int Check(Activity context, String permission, int requestcode)
     {
         if (ContextCompat.checkSelfPermission(context,
                 permission)
@@ -30,7 +28,7 @@ public class PermissionCheck {
             } else {
                 ActivityCompat.requestPermissions(context,
                         new String[]{permission},
-                        MY_PERMISSIONS_REQUEST_OK);
+                        requestcode);
                 return REQPERMISSION;
             }
         }

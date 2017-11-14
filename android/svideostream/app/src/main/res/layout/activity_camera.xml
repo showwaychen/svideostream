@@ -2,10 +2,14 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
-<SurfaceView
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:id="@+id/sv_display"/>
+<!--<SurfaceView-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:id="@+id/sv_display"/>-->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/fl_camera"></FrameLayout>
     <RelativeLayout android:id="@+id/rl"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -23,6 +27,7 @@
                 android:background="@color/white"
                 android:button="@null"
                 android:text="前"
+                android:visibility="invisible"
                 />
         <CheckBox
             android:id="@+id/cb_light"
@@ -34,6 +39,7 @@
             android:background="@color/white"
             android:button="@null"
             android:text="开"
+            android:visibility="invisible"
             />
 
         </RelativeLayout>
@@ -49,23 +55,32 @@
             android:orientation="horizontal">
             <CheckBox
                 android:id="@+id/cb_record"
-                android:layout_width="70dp"
+                android:layout_width="90dp"
                 android:layout_height="30dp"
                 android:layout_marginRight="20dp"
                 android:gravity="center"
                 android:background="@color/white"
                 android:button="@null"
-                android:text="开始录制"
+                android:text="@string/start_record"
                 />
             <CheckBox
                 android:id="@+id/cb_live"
+                android:layout_width="90dp"
+                android:layout_height="30dp"
+                android:layout_marginRight="20dp"
+                android:gravity="center"
+                android:background="@color/white"
+                android:button="@null"
+                android:text="@string/start_live"
+                />
+            <Button
                 android:layout_width="70dp"
                 android:layout_height="30dp"
                 android:gravity="center"
                 android:background="@color/white"
-                android:button="@null"
-                android:text="开始直播"
-                />
+                android:id="@+id/btn_filter"
+                android:text="@string/filter"
+                android:visibility="invisible"/>
         </LinearLayout>
         </RelativeLayout>
 </RelativeLayout>

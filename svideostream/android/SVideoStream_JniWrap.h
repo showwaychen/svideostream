@@ -12,13 +12,16 @@ enum VideoEncoderType
 	H264ENCODER_X264 = 0,
 	H264ENCODER_MEDIACODEC
 };
-class CSVideoStream_JniWrap
+class CSVideoStream_JniWrap: public CSVideoStream::IStreamEventObserver
 {
 
 	CSVideoStream *m_pVideoStream = nullptr;
 	CVideoEncoderBase* m_pVideoEncoder = nullptr;
 	CAudioEncoderBase* m_pAudioEncoder = nullptr;
 	VideoEncoderType m_eVideoEncoderType = H264ENCODER_X264;
+
+	jobject m_jThiz;
+	jmethodID m_jEventCallback;
 
 	static CSVideoStream_JniWrap* GetInst(JNIEnv* jni, jobject j_object);
 public:
@@ -51,6 +54,8 @@ public:
 		m_eVideoEncoderType = etype;
 	}
 	~CSVideoStream_JniWrap();
+
+	virtual void OnStreamEvent(StreamEvent event, StreamError error);
 
 };
 #endif 

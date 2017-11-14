@@ -74,7 +74,11 @@ CSVideoStream_JniWrap* CSVideoStream_JniWrap::GetInst(JNIEnv* jni, jobject j_obj
 CRegisterNativeM CSVideoStream_JniWrap::s_registernm("cn/cxw/svideostreamlib/SVideoStream", ls_nm, ARRAYSIZE(ls_nm));
 CSVideoStream_JniWrap::CSVideoStream_JniWrap(JNIEnv *env, jobject thiz)
 {
+	m_jThiz = env->NewGlobalRef(thiz); 
+	jclass oclass = env->GetObjectClass(m_jThiz);
+	m_jEventCallback = env->GetMethodID(oclass, "nativeEventCallback", "(II)V");
 	m_pVideoStream = new CSVideoStream;
+	m_pVideoStream->SetEventCallback(this);
 }
 
 jlong JNICALL CSVideoStream_JniWrap::newinstance(JNIEnv *env, jobject thiz)
@@ -272,4 +276,12 @@ CSVideoStream_JniWrap::~CSVideoStream_JniWrap()
 	SAFE_DELETE(m_pVideoStream);
 	SAFE_DELETE(m_pAudioEncoder);
 	SAFE_DELETE(m_pVideoEncoder);
+	GetEnv(GetJavaVM())->DeleteGlobalRef(m_jThiz);
+}
+
+void CSVideoStream_JniWrap::OnStreamEvent(StreamEvent event, StreamError error)
+{
+	AttachThreadScoped attachthread(GetJavaVM());
+	JNIEnv* jenv = attachthread.env();
+	jenv->CallVoidMethod(m_jThiz, m_jEventCallback, (jint)event, (jint)error);
 }

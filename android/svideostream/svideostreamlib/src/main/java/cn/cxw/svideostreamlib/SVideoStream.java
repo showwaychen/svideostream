@@ -55,7 +55,11 @@ public class SVideoStream implements AudioRecorder.Listener {
     int m_VideoFrameCount = 0;
     int m_Framerate = 0;
     int m_Bitrate = 0;
-
+    IStreamEventObserver mEventObserver = null;
+    public interface IStreamEventObserver
+    {
+        void onEvent(int eventid, int error);
+    }
 
     public SVideoStream()
     {
@@ -240,7 +244,10 @@ public class SVideoStream implements AudioRecorder.Listener {
         nativeDestroy();
         m_NativeObject = 0;
     }
-
+    public void setEventObserver(IStreamEventObserver observer)
+    {
+        mEventObserver = observer;
+    }
     @Override
     public void onOutputAudioBuffer(byte[] buffer, int size) {
         if (!m_IsStart || mIsPaused) {
@@ -268,4 +275,13 @@ public class SVideoStream implements AudioRecorder.Listener {
         m_LastAudioPts = pts;
             nativeInputAudioData(buffer, size, pts);
     }
+
+   void nativeEventCallback(int event, int error)
+   {
+       if (mEventObserver != null)
+       {
+           mEventObserver.onEvent(event, error);
+       }
+        Log.d(TAG, "event = " + event + "error = " + error);
+   }
 }

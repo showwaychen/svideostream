@@ -61,6 +61,7 @@ int CSVideoStream::StartStream()
 	LOGI << "video encoder params width = " << m_nVideoDstWidth << " height = " << m_nVideoDstHeight << " bitrate = " << m_nVideoBitrate << " fps = " << m_nVideoFrameRate;
 	if (m_pVideoEncoder->OpenEncoder() != 0)
 	{
+		StreamEventNotify(SE_StreamFailed, kSE_VideoEncoderOpenedFailed);
 		LOGE << "video encoder open error";
 		return -1;
 	}
@@ -71,6 +72,7 @@ int CSVideoStream::StartStream()
 		LOGI << "audio encoder params samplerate = " << m_nAudioSamplerate << " samplesize = " << m_nAudioSampleSize << " channels = " << m_nAudioChannels << " bitrate = 64000";
 		if (m_pAudioEncoder->OpenEncoder() != 0)
 		{
+			StreamEventNotify(SE_StreamFailed, kSE_AudioeEncoderOpenedFailed);
 			m_pVideoEncoder->CloseEncoder();
 			m_pAudioEncoder->CloseEncoder();
 			LOGE << "audio encoder open error";
@@ -120,6 +122,7 @@ int CSVideoStream::StartStream()
 		}
 		if (0 != m_pFFmpegMux->StartMux())
 		{
+			StreamEventNotify(SE_StreamFailed, kSE_UnknowError);
 			m_pVideoEncoder->CloseEncoder();
 			if (m_pAudioEncoder != nullptr)
 			{
@@ -161,6 +164,7 @@ int CSVideoStream::StartStream()
 	}
 #endif
 	m_eState = StreamState_STARTED;
+	StreamEventNotify(SE_StreamStarted, kSE_NoneError);
 	return 0;
 }
 
@@ -171,6 +175,8 @@ int CSVideoStream::StopStream()
 		LOGD << "stream hadn't started";
 		return 0;
 	}
+
+
 	if (m_pVideoEncoder != nullptr)
 	{
 		m_pVideoEncoder->CloseEncoder();
@@ -227,6 +233,7 @@ int CSVideoStream::InputVideoData(uint8_t* data, int nszie, int64_t npts)
 		LOGD << "video came but rtmp hasn't connected";
 		return 0;
 	}
+	//LOGD << "video frame size = " << nszie;
 	m_nCurPts = npts;
 	if (m_eSrcDataType == SDT_IMAGEDATA)
 	{
@@ -413,7 +420,7 @@ void CSVideoStream::ImagePreProcess()
 	}
 #ifdef SAVE_YUV_FILE
 	if (NULL != pyuvFile) {
-		fwrite(m_pDstImageData, yuvsize, 1, pyuvFile);
+		fwrite(m_pSrcImageData, uoffset * 4, 1, pyuvFile);
 		fflush(pyuvFile);
 	}
 #endif
@@ -442,25 +449,25 @@ int CSVideoStream::ConvertToI420(const uint8_t *src_y, uint8_t *dst_y, int dst_s
 			width, height);
 
 	case IMAGE_FORMAT_ARGB:
-		return libyuv::ARGBToI420(src_y, stride * 4,
+		return libyuv::ARGBToI420(src_y, stride,
 			dst_y, dst_stride_y,
 			dst_u, dst_stride_u,
 			dst_v, dst_stride_v,
 			width, height);
 	case IMAGE_FORMAT_RGBA:
-		return libyuv::RGBAToI420(src_y, stride * 4,
+		return libyuv::RGBAToI420(src_y, stride,
 			dst_y, dst_stride_y,
 			dst_u, dst_stride_u,
 			dst_v, dst_stride_v,
 			width, height);
 	case IMAGE_FORMAT_ABGR:
-		return libyuv::ABGRToI420(src_y, stride * 4,
+		return libyuv::ABGRToI420(src_y, stride,
 			dst_y, dst_stride_y,
 			dst_u, dst_stride_u,
 			dst_v, dst_stride_v,
 			width, height);
 	case IMAGE_FORMAT_BGRA:
-		return libyuv::BGRAToI420(src_y, stride * 4,
+		return libyuv::BGRAToI420(src_y, stride,
 			dst_y, dst_stride_y,
 			dst_u, dst_stride_u,
 			dst_v, dst_stride_v,
@@ -490,6 +497,7 @@ void CSVideoStream::NotifyEvent(CRtmpLive::LiveEvent event, int nerror)
 {
 	if (event == CRtmpLive::LE_CONNECTED_SUCCESS)
 	{
+		StreamEventNotify(SE_LiveConnected, kSE_NoneError);
 		m_bIsLiveConnected = true;
 	}
 	else if (event == CRtmpLive::LE_NEED_KEYFRAME)
@@ -498,6 +506,14 @@ void CSVideoStream::NotifyEvent(CRtmpLive::LiveEvent event, int nerror)
 		{
 			m_pVideoEncoder->ReqKeyFrame();
 		}
+	}
+	else if (event == CRtmpLive::LE_CONNECT_ERROR)
+	{
+		StreamEventNotify(SE_StreamFailed, kSE_LiveConnectFailed);
+	}
+	else if (event == CRtmpLive::LE_DISCONNECTED)
+	{
+		StreamEventNotify(SE_LiveDisconnected, kSE_NoneError);
 	}
 }
 

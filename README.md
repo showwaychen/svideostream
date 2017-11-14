@@ -4,8 +4,8 @@
 
 ### Features
     cpu: ARMv7a
-    camera recording
-	camera rtmp living
+    camera streaming with beauty filter
+	screen streaming
 	H264: x264 Android MediaCodec
 	AAC: fdkaac
 

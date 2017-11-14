@@ -23,7 +23,12 @@ class CSVideoStream : public CVideoEncoderBase::IEncodedCallBack, CAudioEncoderB
 {
 public:
 	
-	
+	class IStreamEventObserver
+	{
+	public:
+		virtual void OnStreamEvent(StreamEvent event, StreamError error) = 0;
+		virtual ~IStreamEventObserver(){};
+	};
 private:
 	StreamType m_eStreamType = ST_NONE;
 	SrcDataType m_eSrcDataType = SDT_IMAGEDATA;
@@ -67,6 +72,15 @@ private:
 	bool m_bIsLiveConnected = false;
 	std::string m_strFileName;
 	CFFmpegMux* m_pFFmpegMux = nullptr;
+
+	IStreamEventObserver *m_pStreamEventObserver = nullptr;
+	void StreamEventNotify(StreamEvent event, StreamError error)
+	{
+		if (m_pStreamEventObserver != nullptr)
+		{
+			m_pStreamEventObserver->OnStreamEvent(event, error);
+		}
+	}
 	void InitParams();
 	void ImagePreProcess();
 
@@ -138,6 +152,10 @@ public:
 	void SetAudioCodec(CAudioEncoderBase* paencoder)
 	{
 		m_pAudioEncoder = paencoder;
+	}
+	void SetEventCallback(IStreamEventObserver *observer)
+	{
+		m_pStreamEventObserver = observer;
 	}
 	~CSVideoStream();
 

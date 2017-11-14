@@ -5,7 +5,7 @@ package cn.cxw.svideostreamlib;
  */
 
 public class VideoStreamConstants {
-    public static final  String VersionCode = "1.3";
+    public static final  String VersionCode = "1.4";
     //stream type
     public  static int ST_LIVE = 1;
     public static int ST_RECORD = 2;
@@ -43,4 +43,20 @@ public class VideoStreamConstants {
     public  static final int LS_WARNING = 3;
     public  static final int LS_ERROR = 4;
     public  static final int LS_NONE = 5;
+
+
+    //stream event
+    public  static final int SE_LiveConnected =0;
+    public  static final int SE_LiveDisconnected = 1;
+    public  static final int SE_RecordStartedSuccess = 2;
+    public  static final int SE_StreamWarning = 3;
+    public  static final int SE_StreamFailed = 4;
+    public  static final int SE_StreamStarted = 5;
+    //stream event error
+    public  static final int kSE_NoneError = 0;
+    public  static final int kSE_UnknowError = 1;
+    public  static final int kSE_VideoEncoderOpenedFailed = 2;
+    public  static final int kSE_AudioeEncoderOpenedFailed = 3;
+    public  static final int kSE_LiveConnectFailed = 4;
+    public  static final int kSE_RecordOpenFileFailed = 5;
 }
