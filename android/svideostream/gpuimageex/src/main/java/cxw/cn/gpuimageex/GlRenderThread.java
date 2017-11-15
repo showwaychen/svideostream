@@ -1,7 +1,10 @@
 package cxw.cn.gpuimageex;
 
+<<<<<<< HEAD
 import android.opengl.EGL14;
 import android.opengl.GLES20;
+=======
+>>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
 import android.opengl.GLUtils;
 import android.util.Log;
 import android.view.Surface;
@@ -22,7 +25,11 @@ import javax.microedition.khronos.opengles.GL;
 public class GlRenderThread extends Thread {
     static final  String TAG = "GlRenderThread";
     private AtomicBoolean mShouldRender;
+<<<<<<< HEAD
     protected Surface mSurface;
+=======
+    private Surface mSurface;
+>>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
     private GLRenderer mRenderer;
     private Object mSyncToken;
     boolean mRequestRender = false;
@@ -30,14 +37,22 @@ public class GlRenderThread extends Thread {
     private EGL10 mEgl;
     private EGLDisplay mEglDisplay = EGL10.EGL_NO_DISPLAY;
     private EGLContext mEglContext = EGL10.EGL_NO_CONTEXT;
+<<<<<<< HEAD
     private EGLContext mEglSharedContext = EGL10.EGL_NO_CONTEXT;
+=======
+>>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
     private EGLSurface mEglSurface = EGL10.EGL_NO_SURFACE;
     private GL mGL;
     private static final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
     private static final int EGL_OPENGL_ES2_BIT = 4;
 
+<<<<<<< HEAD
     protected int mViewWidth = 0;
     protected int mViewHeight = 0;
+=======
+    int mViewWidth = 0;
+    int mViewHeight = 0;
+>>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
     private boolean m_needResize = false;
     public interface GLRenderer {
         void onInit();
@@ -46,6 +61,7 @@ public class GlRenderThread extends Thread {
         void onDeinit();
     }
 
+<<<<<<< HEAD
     protected  GlRenderThread()
     {
         mSyncToken = new Object();
@@ -54,6 +70,8 @@ public class GlRenderThread extends Thread {
     {
         mSurface = surface;
     }
+=======
+>>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
     public GlRenderThread(Surface surface, GLRenderer renderer) {
         mSurface = surface;
         mRenderer = renderer;
@@ -61,6 +79,7 @@ public class GlRenderThread extends Thread {
         Log.d(TAG, "new GlRenderThread");
 //        mShouldRender = shouldRender;
     }
+<<<<<<< HEAD
     public  void setRender(GLRenderer render)
     {
         mRenderer = render;
@@ -73,6 +92,9 @@ public class GlRenderThread extends Thread {
     {
         return mEglContext;
     }
+=======
+
+>>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
     private void initGL() {
         mEgl = (EGL10) EGLContext.getEGL();
 
@@ -120,7 +142,11 @@ public class GlRenderThread extends Thread {
                 EGL_CONTEXT_CLIENT_VERSION, 2,
                 EGL10.EGL_NONE
         };
+<<<<<<< HEAD
         mEglContext = mEgl.eglCreateContext(mEglDisplay, configs[0], mEglSharedContext, contextAttribs);
+=======
+        mEglContext = mEgl.eglCreateContext(mEglDisplay, configs[0], EGL10.EGL_NO_CONTEXT, contextAttribs);
+>>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
         mEglSurface = mEgl.eglCreateWindowSurface(mEglDisplay, configs[0], mSurface, null);
         if (mEglSurface == EGL10.EGL_NO_SURFACE || mEglContext == EGL10.EGL_NO_CONTEXT) {
             int error = mEgl.eglGetError();
@@ -137,7 +163,10 @@ public class GlRenderThread extends Thread {
         }
 
         mGL = mEglContext.getGL();
+<<<<<<< HEAD
         GLES20.glFlush();
+=======
+>>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
         Log.d(TAG, "initGL over");
     }
 
@@ -216,7 +245,10 @@ public class GlRenderThread extends Thread {
         {
             mRenderer.onDeinit();
         }
+<<<<<<< HEAD
         mSurface = null;
+=======
+>>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
         destoryGL();
     }
 }
