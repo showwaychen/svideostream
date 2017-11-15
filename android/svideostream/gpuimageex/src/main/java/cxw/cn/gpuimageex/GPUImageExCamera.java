@@ -42,7 +42,13 @@ public class GPUImageExCamera extends GPUImageFilter{
             "{\n" +
             "     gl_FragColor = texture2D(inputImageTexture, textureCoordinate);\n" +
             "}";
-    GPUImageEx mGPUImageEx;
+    public  interface CameraEventObserver
+    {
+        void onStartedPreview();
+        void onStopPreview();
+        void onFrameFrameAvailable();
+    }
+    CameraEventObserver mGPUImageEx;
 
     boolean mIsPreview = false;
 
@@ -62,10 +68,10 @@ public class GPUImageExCamera extends GPUImageFilter{
 
     private Rotation mRotation = Rotation.NORMAL;
     GPUImageExFrameBuffer mFrameBuffer = null;
-    public GPUImageExCamera(GPUImageEx gpuimagecontext)
+    public GPUImageExCamera(CameraEventObserver observer)
     {
         super(VERTEX_SHADER, FRAGMENT_SHADER);
-        mGPUImageEx = gpuimagecontext;
+        mGPUImageEx = observer;
         if (hasFrontCamera())
         {
             mCameraFace = Camera.CameraInfo.CAMERA_FACING_FRONT;
@@ -77,6 +83,12 @@ public class GPUImageExCamera extends GPUImageFilter{
         mVertexBuffer.put(mDefaultVertex).position(0);
         mTextureCoorBuffer = ByteBuffer.allocateDirect(TextureRotationUtil.TEXTURE_NO_ROTATION.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         mTextureCoorBuffer.put(TextureRotationUtil.TEXTURE_NO_ROTATION).position(0);
+
+        mCameraId = getCameraId(mCameraFace);
+        Camera.CameraInfo info = new Camera.CameraInfo();
+        Camera.getCameraInfo(mCameraId, info);
+        setCameraRotation(info.orientation);
+
     }
 
     public void setCameraSize(int width , int height)
@@ -87,6 +99,7 @@ public class GPUImageExCamera extends GPUImageFilter{
         }
         mCameraWidth = width;
         mCameraHeight = height;
+        adjustImageScaling();
     }
     public void setCameraRotation(int rotation)
     {
@@ -105,6 +118,7 @@ public class GPUImageExCamera extends GPUImageFilter{
                 mRotation = Rotation.ROTATION_270;
                 break;
         }
+        adjustImageScaling();
     }
     public  int getCameraFrameWidth()
     {
@@ -192,15 +206,13 @@ public class GPUImageExCamera extends GPUImageFilter{
                     Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
                 cparams.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
             }
-            Camera.CameraInfo info = new Camera.CameraInfo();
-            Camera.getCameraInfo(mCameraId, info);
-            setCameraRotation(info.orientation);
+
             cparams.setPreviewSize(mCameraWidth, mCameraHeight);
             mCamera.setParameters(cparams);
 
             mCamera.setPreviewTexture(mSurfaceTexture);
             mCamera.startPreview();
-            adjustImageScaling();
+//            adjustImageScaling();
             if (mFrameBuffer != null)
             {
                 mFrameBuffer.release();
@@ -285,7 +297,7 @@ public class GPUImageExCamera extends GPUImageFilter{
         mSurfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
             @Override
             public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-                mGPUImageEx.requestRender();
+                mGPUImageEx.onFrameFrameAvailable();
             }
         });
     }

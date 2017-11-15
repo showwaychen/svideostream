@@ -25,15 +25,8 @@ public class ScreenVideoFrameSource extends VideoFrameSource{
     private Handler mHandler;
     private static final int VIRTUAL_DISPLAY_FLAGS = DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY | DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
     byte[] bytebuffer = null;
-    public interface VideoFrameSourceObserver
-    {
-        void onStarted();
-    }
-    VideoFrameSourceObserver mObserver = null;
-    public void setObserver(VideoFrameSourceObserver cb)
-    {
-        mObserver = cb;
-    }
+
+
     public ScreenVideoFrameSource()
     {
         mHandler = new Handler();
@@ -90,6 +83,7 @@ public class ScreenVideoFrameSource extends VideoFrameSource{
             if (mImageReader != null)
             {
                 mImageReader.setOnImageAvailableListener(null, null);
+                mImageReader.close();
             }
 
         }

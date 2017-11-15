@@ -1,5 +1,7 @@
 package cn.cxw.svideostreamlib;
 
+import android.util.Log;
+
 import cxw.cn.gpuimageex.GPUImageBeautifyFilter;
 import cxw.cn.gpuimageex.GPUImageEx;
 import cxw.cn.gpuimageex.GPUImageFilter;
@@ -19,6 +21,20 @@ public class GPUImageExFrameSource extends VideoFrameSource implements GPUImageE
         mGpuImageEx.setObserver(this);
         mSrcFormate = VideoStreamConstants.IMAGE_FORMAT_ABGR;
     }
+    public void startPreview()
+    {
+        if(mGpuImageEx.isPreview())
+        {
+            Log.d(TAG," has already previewed");
+            return ;
+        }
+        mSrcStride = 0;
+        mGpuImageEx.startPreView();
+    }
+    public void stopPreview()
+    {
+        mGpuImageEx.stopPreview();
+    }
     public void setCameraSize(int width, int height)
     {
         mGpuImageEx.setCameraSize(width, height);
@@ -32,10 +48,19 @@ public class GPUImageExFrameSource extends VideoFrameSource implements GPUImageE
         mGpuImageEx.setPreviewView(view);
     }
     @Override
-    public void OnProcessingFrame(byte[] framedata, int width, int height) {
+    public void OnProcessingFrame(byte[] framedata, int stride, int height) {
+        if (stride != mSrcStride)
+        {
+            mSrcStride = stride;
+            if (mObserver != null)
+            {
+                mObserver.onStarted();
+            }
+        }
+
         if (mFrameCallback != null)
         {
-            mFrameCallback.onVideoFrameComing(framedata, mSrcStride, height);
+            mFrameCallback.onVideoFrameComing(framedata, stride, height);
         }
     }
 
@@ -44,10 +69,6 @@ public class GPUImageExFrameSource extends VideoFrameSource implements GPUImageE
         return mGpuImageEx.getProcessedFrameWidth();
     }
 
-    @Override
-    public int getSrcStride() {
-        return getSrcWidth() * 4;
-    }
 
     @Override
     public int getSrcHeight() {

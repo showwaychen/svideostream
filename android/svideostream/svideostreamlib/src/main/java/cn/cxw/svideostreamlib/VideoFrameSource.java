@@ -16,7 +16,15 @@ public abstract class VideoFrameSource {
     protected int mRotation = 0;
 
     protected OnVideoFrameComing mFrameCallback = null;
-
+    public interface VideoFrameSourceObserver
+    {
+        void onStarted();
+    }
+    VideoFrameSourceObserver mObserver = null;
+    public void setObserver(VideoFrameSourceObserver cb)
+    {
+        mObserver = cb;
+    }
     public int getSrcWidth()
     {
         return mSrcWidth;
