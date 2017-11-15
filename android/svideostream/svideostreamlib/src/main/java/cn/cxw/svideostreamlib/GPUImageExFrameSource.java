@@ -1,10 +1,7 @@
 package cn.cxw.svideostreamlib;
 
-<<<<<<< HEAD
 import android.util.Log;
 
-=======
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
 import cxw.cn.gpuimageex.GPUImageBeautifyFilter;
 import cxw.cn.gpuimageex.GPUImageEx;
 import cxw.cn.gpuimageex.GPUImageFilter;
@@ -24,7 +21,6 @@ public class GPUImageExFrameSource extends VideoFrameSource implements GPUImageE
         mGpuImageEx.setObserver(this);
         mSrcFormate = VideoStreamConstants.IMAGE_FORMAT_ABGR;
     }
-<<<<<<< HEAD
     public void startPreview()
     {
         if(mGpuImageEx.isPreview())
@@ -39,8 +35,6 @@ public class GPUImageExFrameSource extends VideoFrameSource implements GPUImageE
     {
         mGpuImageEx.stopPreview();
     }
-=======
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
     public void setCameraSize(int width, int height)
     {
         mGpuImageEx.setCameraSize(width, height);
@@ -54,7 +48,6 @@ public class GPUImageExFrameSource extends VideoFrameSource implements GPUImageE
         mGpuImageEx.setPreviewView(view);
     }
     @Override
-<<<<<<< HEAD
     public void OnProcessingFrame(byte[] framedata, int stride, int height) {
         if (stride != mSrcStride)
         {
@@ -68,12 +61,6 @@ public class GPUImageExFrameSource extends VideoFrameSource implements GPUImageE
         if (mFrameCallback != null)
         {
             mFrameCallback.onVideoFrameComing(framedata, stride, height);
-=======
-    public void OnProcessingFrame(byte[] framedata, int width, int height) {
-        if (mFrameCallback != null)
-        {
-            mFrameCallback.onVideoFrameComing(framedata, mSrcStride, height);
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
         }
     }
 
@@ -82,13 +69,6 @@ public class GPUImageExFrameSource extends VideoFrameSource implements GPUImageE
         return mGpuImageEx.getProcessedFrameWidth();
     }
 
-<<<<<<< HEAD
-=======
-    @Override
-    public int getSrcStride() {
-        return getSrcWidth() * 4;
-    }
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
 
     @Override
     public int getSrcHeight() {

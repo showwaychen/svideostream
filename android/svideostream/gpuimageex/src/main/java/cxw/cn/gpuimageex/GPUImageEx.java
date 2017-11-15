@@ -1,15 +1,10 @@
 package cxw.cn.gpuimageex;
 
-<<<<<<< HEAD
 import android.media.Image;
 import android.media.ImageReader;
 import android.opengl.GLES20;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
-=======
-import android.opengl.GLES20;
-import android.support.annotation.NonNull;
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
 import android.util.Log;
 
 import java.nio.ByteBuffer;
@@ -24,11 +19,7 @@ import cxw.cn.gpuimageex.util.TextureRotationUtil;
  * Created by cxw on 2017/11/5.
  */
 
-<<<<<<< HEAD
 public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.CameraEventObserver {
-=======
-public class GPUImageEx implements IPreviewView.IPreviewCallback,GlRenderThread.GLRenderer {
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
     static String TAG = GPUImageEx.class.getCanonicalName();
     static final float CUBE[] = {
             -1.0f, -1.0f,
@@ -38,7 +29,6 @@ public class GPUImageEx implements IPreviewView.IPreviewCallback,GlRenderThread.
     };
 
 
-<<<<<<< HEAD
 
 
     public interface GPUImageExObserver
@@ -52,14 +42,6 @@ public class GPUImageEx implements IPreviewView.IPreviewCallback,GlRenderThread.
     boolean mbUseImageReaderThread = false;
     int mSharedTextId = OpenGlUtils.NO_TEXTURE;
 
-=======
-    public interface GPUImageExObserver
-    {
-        void OnProcessingFrame(byte[] framedata, int width, int height);
-    }
-    GlRenderThread mGlRenderThread = null;
-    IPreviewView mPreviewView = null;
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
     GPUImageExObserver mObserver = null;
 
     //filter
@@ -69,15 +51,11 @@ public class GPUImageEx implements IPreviewView.IPreviewCallback,GlRenderThread.
 
 
     GPUImageExFrameBuffer mFrameBuffer = null;
-<<<<<<< HEAD
 
 
     private final Queue<Runnable> mRunOnDraw;
 
 
-=======
-    private final Queue<Runnable> mRunOnDraw;
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
     FloatBuffer mCubeBuffer;
     FloatBuffer mDisplayTextureBuffer;
     FloatBuffer mOffScreenTextureBuffer;
@@ -109,23 +87,15 @@ public class GPUImageEx implements IPreviewView.IPreviewCallback,GlRenderThread.
                 .order(ByteOrder.nativeOrder())
                 .asFloatBuffer();
         mOffScreenTextureBuffer.put(TextureRotationUtil.TEXTURE_NO_ROTATION).position(0);
-<<<<<<< HEAD
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mbUseImageReaderThread = true;
         }
-=======
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
 
     }
     public void setPreviewView(IPreviewView pview)
     {
-<<<<<<< HEAD
         mGlRenderThread = new GlThreadPreview(pview);
 
-=======
-        mPreviewView = pview;
-        pview.addRenderCallback(this);
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
     }
     public void setObserver(GPUImageExObserver observer)
     {
@@ -162,7 +132,6 @@ public class GPUImageEx implements IPreviewView.IPreviewCallback,GlRenderThread.
     }
     public  void requestRender()
     {
-<<<<<<< HEAD
         if (mbUseImageReaderThread && mGlProcessThread != null)
         {
             mGlProcessThread.requestRender();
@@ -279,23 +248,6 @@ public class GPUImageEx implements IPreviewView.IPreviewCallback,GlRenderThread.
 
         }
         mGlRenderThread.stopRender();
-=======
-        if (mGlRenderThread != null)
-        {
-            mGlRenderThread.requestRender();
-        }
-    }
-
-    //camera about
-    public void startPreView()
-    {
-
-//        mGPUImageCamera.startPreview();
-    }
-    public void stopPreview()
-    {
-//        mGPUImageCamera.stopPreview();
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
     }
     public boolean isFrontCamera() {
         return mGPUImageCamera.isFrontCamera();
@@ -320,17 +272,10 @@ public class GPUImageEx implements IPreviewView.IPreviewCallback,GlRenderThread.
     {
         mGPUImageCamera.setCameraSize(width, height);
     }
-<<<<<<< HEAD
 //    public void setCameraRotation(int rotation)
 //    {
 //        mGPUImageCamera.setCameraRotation(rotation);
 //    }
-=======
-    public void setCameraRotation(int rotation)
-    {
-        mGPUImageCamera.setCameraRotation(rotation);
-    }
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
     public int getProcessedFrameWidth()
     {
         return mGPUImageCamera.getCameraFrameWidth();
@@ -339,7 +284,6 @@ public class GPUImageEx implements IPreviewView.IPreviewCallback,GlRenderThread.
     {
         return mGPUImageCamera.getCameraFrameHeight();
     }
-<<<<<<< HEAD
     //camera event
     @Override
     public void onStartedPreview() {
@@ -355,8 +299,6 @@ public class GPUImageEx implements IPreviewView.IPreviewCallback,GlRenderThread.
     public void onFrameFrameAvailable() {
         requestRender();
     }
-=======
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
     //open gl es thread
     @Override
     public void onDrawFrame() {
@@ -368,10 +310,7 @@ public class GPUImageEx implements IPreviewView.IPreviewCallback,GlRenderThread.
             {
                 mFilter.onOutputSizeChanged(mGPUImageCamera.getCameraFrameWidth(), mGPUImageCamera.getCameraFrameHeight());
             }
-<<<<<<< HEAD
 
-=======
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
             mCaptureBuffer = ByteBuffer.allocate(mFrameBuffer.getFrameBufferHeight() * mFrameBuffer.getFrameBufferWidth() * 4);
 
         }
@@ -395,7 +334,6 @@ public class GPUImageEx implements IPreviewView.IPreviewCallback,GlRenderThread.
             }
         if (mObserver != null)
         {
-<<<<<<< HEAD
 //            long ptime = System.currentTimeMillis();
 //            //???????
 //            GLES20.glReadPixels(0, 0,
@@ -405,17 +343,6 @@ public class GPUImageEx implements IPreviewView.IPreviewCallback,GlRenderThread.
 //                    mCaptureBuffer);
 ////            Log.d(TAG, "glReadPixels time = " + (System.currentTimeMillis() - ptime));
 //            mObserver.OnProcessingFrame(mCaptureBuffer.array(), mFrameBuffer.getFrameBufferWidth(), mFrameBuffer.getFrameBufferHeight());
-=======
-            long ptime = System.currentTimeMillis();
-            //???????
-            GLES20.glReadPixels(0, 0,
-                    mFrameBuffer.getFrameBufferWidth(), mFrameBuffer.getFrameBufferHeight(),
-                    GLES20.GL_RGBA,
-                    GLES20.GL_UNSIGNED_BYTE,
-                    mCaptureBuffer);
-//            Log.d(TAG, "glReadPixels time = " + (System.currentTimeMillis() - ptime));
-            mObserver.OnProcessingFrame(mCaptureBuffer.array(), mFrameBuffer.getFrameBufferWidth(), mFrameBuffer.getFrameBufferHeight());
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
         }
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
@@ -429,15 +356,12 @@ public class GPUImageEx implements IPreviewView.IPreviewCallback,GlRenderThread.
         GLES20.glViewport(0, 0, mOutputWidth, mOutputHeight);
         //display framebuffer
         mDisplayFilter.onDraw(textureid, mCubeBuffer, mDisplayTextureBuffer);
-<<<<<<< HEAD
         mSharedTextId = mFrameBuffer.getTextureId();
         if (mbUseImageReaderThread && mGlRenderThread != null)
         {
             mGlRenderThread.requestRender();
         }
 
-=======
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
     }
     @Override
     public void onInit() {
@@ -447,21 +371,15 @@ public class GPUImageEx implements IPreviewView.IPreviewCallback,GlRenderThread.
             mFilter.init();
         }
         mDisplayFilter.init();
-<<<<<<< HEAD
         if (mbUseImageReaderThread)
         {
             startPreviewGlThread();
         }
-=======
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
 
     }
     @Override
     public void onResize(int width, int height) {
-<<<<<<< HEAD
         Log.d(TAG, "onResize width = " + width + "height = " + height);
-=======
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
         mOutputWidth = width;
         mOutputHeight = height;
 //        mGPUImageCamera.onOutputSizeChanged(mOutputWidth, mOutputHeight);
@@ -487,29 +405,4 @@ public class GPUImageEx implements IPreviewView.IPreviewCallback,GlRenderThread.
         mDisplayFilter.destroy();
         mGPUImageCamera.stopPreview();
     }
-<<<<<<< HEAD
-=======
-    @Override
-    public void onSurfaceCreated(@NonNull IPreviewView.ISurfaceHolder holder, int width, int height) {
-        mGlRenderThread = new GlRenderThread(holder.getSurface(), this);
-        mGlRenderThread.start();
-    }
-
-    @Override
-    public void onSurfaceChanged(@NonNull IPreviewView.ISurfaceHolder holder, int width, int height) {
-        if (mGlRenderThread != null)
-        {
-            mGlRenderThread.requestResize(width, height);
-        }
-    }
-
-    @Override
-    public void onSurfaceDestroyed(@NonNull IPreviewView.ISurfaceHolder holder) {
-        if (mGlRenderThread != null)
-        {
-            mGlRenderThread.stopRender();
-            mGlRenderThread = null;
-        }
-    }
->>>>>>> 6b62b3a06fc12fc6edb6813b4f5254d5c85f0568
 }
