@@ -21,4 +21,13 @@ public class VideoStreamSetting {
     {
         return 15;
     }
+    public MediaConfig getH264EncoderConfigs()
+    {
+        MediaConfig configs = new MediaConfig();
+        configs.putConfig(VideoStreamConstants.KEY_PROFILE, VideoStreamConstants.VALUE_BASELINE);
+        configs.putConfig(VideoStreamConstants.KEY_PRESET, VideoStreamConstants.VALUE_superfast);
+        configs.putConfig(VideoStreamConstants.KEY_TUNE, VideoStreamConstants.VALUE_zerolatency);
+        configs.putConfig(VideoStreamConstants.KEY_RC_METHOD, VideoStreamConstants.VALUE_rc_abr);
+        return configs;
+    }
 }

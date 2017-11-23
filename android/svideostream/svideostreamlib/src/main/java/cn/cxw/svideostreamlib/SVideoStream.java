@@ -3,6 +3,8 @@ package cn.cxw.svideostreamlib;
 import android.provider.Settings;
 import android.util.Log;
 
+import java.nio.ByteBuffer;
+
 /**
  * Created by user on 2017/10/13.
  */
@@ -24,9 +26,12 @@ public class SVideoStream implements AudioRecorder.Listener {
     native void nativeSetPublishUrl(String url);
     native void nativeSetRecordPath(String filename);
     native void nativeSetAudioEnable(boolean enable);
-
-    native int nativeInputVideoData(byte[] vdata, int size, long pts);
+    native void nativeSettingSet(int key, MediaConfig configs);
+    native int nativeGetState();
+    native int nativeInputVideoData(ByteBuffer vdata, int size, long pts);
     native int  nativeInputAudioData(byte[] adata, int size, long pts);
+
+    native StatsReport[] nativeGetStats();
 
     native void nativeDestroy();
     static
@@ -98,7 +103,7 @@ public class SVideoStream implements AudioRecorder.Listener {
             m_AudioRecord.isMute = m_AudioMute;
         }
     }
-    public long GetStreamDuration()
+    public long getStreamDuration()
     {
         if (!m_IsStart)
         {
@@ -106,7 +111,19 @@ public class SVideoStream implements AudioRecorder.Listener {
         }
         return Math.max(m_LastAudioPts, m_LastVideoPts);
     }
-    private long GetClockDuration() {
+    public int getState()
+    {
+        return nativeGetState();
+    }
+    public void settingSet(int key, MediaConfig configs)
+    {
+        nativeSettingSet(key, configs);
+    }
+    public StatsReport[] getStatsReport()
+    {
+        return nativeGetStats();
+    }
+    private long getClockDuration() {
         if (!m_IsStart || mStartTime == 0) {
             return 0;
         }
@@ -120,6 +137,7 @@ public class SVideoStream implements AudioRecorder.Listener {
         m_IsStart = true;
         mIsPaused = false;
         m_VideoFrameCount = 1;
+        m_LastAudioPts = m_LastVideoPts = 0;
     }
     public int StartStream()
     {
@@ -214,13 +232,13 @@ public class SVideoStream implements AudioRecorder.Listener {
     {
         nativeSetRecordPath(filename);
     }
-    public int InpputVideoData(byte[] vdata)
+    public int InpputVideoData(ByteBuffer vdata)
     {
         if (!m_IsStart || mIsPaused) {
             return -1;
         }
         long notTime = System.currentTimeMillis();
-        long clockpts = GetClockDuration();
+        long clockpts = getClockDuration();
         if (mStartTime == 0)
         {
             if (m_AudioEnable && !m_IsAudioDataCame)
@@ -236,9 +254,9 @@ public class SVideoStream implements AudioRecorder.Listener {
         }
         m_VideoFrameCount++;
         m_LastVideoPts = clockpts;
-        return nativeInputVideoData(vdata, vdata.length, m_LastVideoPts);
+        return nativeInputVideoData(vdata, vdata.remaining(), m_LastVideoPts);
     }
-    public void DestroyStream()
+    public void destroyStream()
     {
         StopStream();
         nativeDestroy();
@@ -259,7 +277,7 @@ public class SVideoStream implements AudioRecorder.Listener {
             Log.d(TAG, "wait for videodata callback");
             return;
         }
-        long curclockpts = GetClockDuration();
+        long curclockpts = getClockDuration();
         long calcPts = mAudioSumSamples * 1000 / 44100;
         long delay = curclockpts - calcPts;
         long pts = calcPts;

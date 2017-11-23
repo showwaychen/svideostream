@@ -33,7 +33,7 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
 
     public interface GPUImageExObserver
     {
-        void OnProcessingFrame(byte[] framedata, int stride, int height);
+        void OnProcessingFrame(ByteBuffer framedata, int stride, int height);
     }
     //gl thread
     GlRenderThread mGlRenderThread = null;
@@ -195,7 +195,6 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     class ImageAvailable implements ImageReader.OnImageAvailableListener
     {
-            byte[] bytebuffer = null;
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             public void onImageAvailable(ImageReader reader) {
@@ -209,12 +208,7 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
                         mSrcStride = planes[0].getRowStride();
                         if (mObserver != null)
                         {
-                            if (bytebuffer == null)
-                            {
-                                bytebuffer = new byte[buffer.remaining()];
-                            }
-                            buffer.get(bytebuffer, 0, bytebuffer.length);
-                            mObserver.OnProcessingFrame(bytebuffer, mSrcStride, image.getHeight());
+                            mObserver.OnProcessingFrame(buffer, mSrcStride, image.getHeight());
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -311,7 +305,7 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
                 mFilter.onOutputSizeChanged(mGPUImageCamera.getCameraFrameWidth(), mGPUImageCamera.getCameraFrameHeight());
             }
 
-            mCaptureBuffer = ByteBuffer.allocate(mFrameBuffer.getFrameBufferHeight() * mFrameBuffer.getFrameBufferWidth() * 4);
+            mCaptureBuffer = ByteBuffer.allocateDirect(mFrameBuffer.getFrameBufferHeight() * mFrameBuffer.getFrameBufferWidth() * 4);
 
         }
         int displaytextureid = -1;
@@ -332,17 +326,18 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
                 mFilter.onDraw(mGPUImageCamera.getTextureId(), mCubeBuffer, mOffScreenTextureBuffer);
                 displaytextureid = mFrameBuffer.getTextureId();
             }
-        if (mObserver != null)
+
+        if (!mbUseImageReaderThread && mObserver != null)
         {
-//            long ptime = System.currentTimeMillis();
-//            //???????
-//            GLES20.glReadPixels(0, 0,
-//                    mFrameBuffer.getFrameBufferWidth(), mFrameBuffer.getFrameBufferHeight(),
-//                    GLES20.GL_RGBA,
-//                    GLES20.GL_UNSIGNED_BYTE,
-//                    mCaptureBuffer);
-////            Log.d(TAG, "glReadPixels time = " + (System.currentTimeMillis() - ptime));
-//            mObserver.OnProcessingFrame(mCaptureBuffer.array(), mFrameBuffer.getFrameBufferWidth(), mFrameBuffer.getFrameBufferHeight());
+            long ptime = System.currentTimeMillis();
+            //???????
+            GLES20.glReadPixels(0, 0,
+                    mFrameBuffer.getFrameBufferWidth(), mFrameBuffer.getFrameBufferHeight(),
+                    GLES20.GL_RGBA,
+                    GLES20.GL_UNSIGNED_BYTE,
+                    mCaptureBuffer);
+//            Log.d(TAG, "glReadPixels time = " + (System.currentTimeMillis() - ptime));
+            mObserver.OnProcessingFrame(mCaptureBuffer, mFrameBuffer.getFrameBufferWidth() * 4, mFrameBuffer.getFrameBufferHeight());
         }
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);

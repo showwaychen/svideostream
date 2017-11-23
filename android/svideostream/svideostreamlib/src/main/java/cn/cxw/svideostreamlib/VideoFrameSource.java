@@ -1,13 +1,23 @@
 package cn.cxw.svideostreamlib;
 
+import java.nio.ByteBuffer;
+
 /**
  * Created by cxw on 2017/11/12.
  */
 
 public abstract class VideoFrameSource {
+    public  enum State
+    {
+        kNONE,
+        kStartting,
+        kStarted,
+        kStopped
+    }
+
     public interface OnVideoFrameComing
     {
-        void onVideoFrameComing(byte[] framedata, int stride, int height);
+        void onVideoFrameComing(ByteBuffer framedata, int stride, int height);
     }
     protected int mSrcWidth = 0;
     protected int mSrcStride = 0;
@@ -15,6 +25,7 @@ public abstract class VideoFrameSource {
     protected int mSrcFormate = 0;
     protected int mRotation = 0;
 
+    protected  State mState = State.kNONE;
     protected OnVideoFrameComing mFrameCallback = null;
     public interface VideoFrameSourceObserver
     {
@@ -51,4 +62,9 @@ public abstract class VideoFrameSource {
     }
 
     public abstract boolean isStarted();
+
+    public State getState()
+    {
+        return mState;
+    }
 }

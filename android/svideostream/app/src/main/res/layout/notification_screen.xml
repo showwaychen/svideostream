@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="record"
+            android:gravity="center"
+            android:textSize="8sp"
+            android:textColor="@color/colorAccent"
+            android:textStyle="italic"
+            android:background="@mipmap/ic_launcher_round"
+            android:layout_gravity="center_vertical"
+            android:id="@+id/tv_streamtype"/>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="start"
+            android:layout_margin="10dp"
+            android:textSize="18sp"
+            android:textStyle="italic"
+            android:gravity="center_vertical|right"
+            android:id="@+id/btn_start"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_margin="10dp"
+            android:text="00:00:01"
+            android:textSize="18sp"
+            android:textStyle="italic"
+            android:gravity="center"
+            android:textColor="@color/colorAccent"
+            android:id="@+id/tv_streamtime"/>
+
+    </LinearLayout>
+</LinearLayout>

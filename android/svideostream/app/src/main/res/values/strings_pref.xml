@@ -63,4 +63,34 @@
         <item>15</item>
         <item>12</item>
     </string-array>
+
+
+
+    <string name="h264_setting_general_title">H264 Setting</string>
+
+    <string name="pref_key_h264profile">profile</string>
+    <string name="pref_h264profile_title">H264 Profile</string>
+    <string-array name="pref_entries_h264profile">
+        <item>baseline</item>
+    </string-array>
+
+    <string name="pref_key_x264preset">preset</string>
+    <string name="pref_x264preset_title">Preset</string>
+    <string-array name="pref_entries_x264preset">
+        <item>superfast</item>
+    </string-array>
+
+    <string name="pref_key_x264tune">tune</string>
+    <string name="pref_x264tune_title">Tune</string>
+    <string-array name="pref_entries_x264tune">
+        <item>zerolatency</item>
+    </string-array>
+
+    <string name="pref_key_rcmethod">rc_method</string>
+    <string name="pref_rcmethod_title">rate control method</string>
+    <string-array name="pref_entries_rcmethod">
+        <item>RC_ABR</item>
+        <item>RC_CQP</item>
+        <item>RC_CRF</item>
+    </string-array>
 </resources>

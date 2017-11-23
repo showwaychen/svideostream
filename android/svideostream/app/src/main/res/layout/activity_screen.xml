@@ -23,13 +23,13 @@
         android:layout_height="50dp"
         android:layout_marginBottom="10dp"
         android:id="@+id/btn_screenstart"
-        android:text="@string/start_record"/>
+        android:text="@string/start_capture_record"/>
     <Button
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_marginBottom="10dp"
         android:id="@+id/btn_screenstartlive"
-        android:text="@string/start_live"/>
+        android:text="@string/start_capture_live"/>
     <Button
         android:layout_width="match_parent"
         android:layout_height="50dp"

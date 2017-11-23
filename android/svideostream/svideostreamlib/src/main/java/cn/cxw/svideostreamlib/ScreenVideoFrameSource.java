@@ -6,6 +6,7 @@ import android.hardware.display.VirtualDisplay;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.projection.MediaProjection;
+import android.nfc.Tag;
 import android.os.Build;
 import android.os.Handler;
 import android.support.annotation.RequiresApi;
@@ -24,7 +25,6 @@ public class ScreenVideoFrameSource extends VideoFrameSource{
     private VirtualDisplay mVirtualDisplay = null;
     private Handler mHandler;
     private static final int VIRTUAL_DISPLAY_FLAGS = DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY | DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
-    byte[] bytebuffer = null;
 
 
     public ScreenVideoFrameSource()
@@ -60,15 +60,21 @@ public class ScreenVideoFrameSource extends VideoFrameSource{
 
     public boolean startScreenCapture()
     {
+        if (mState == State.kStarted || mState == State.kStartting)
+        {
+            Log.d(TAG, "startScreenCapture has started");
+            return true;
+        }
         mSrcStride = 0;
-        bytebuffer = null;
         if (mMediaProjection == null || mSrcHeight == 0 || mSrcWidth == 0)
         {
             return false;
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
         {
-            return createVirtualDisplay();
+            boolean ret = createVirtualDisplay();
+            mState = ret?State.kStartting:State.kNONE;
+            return ret;
         }
         return false;
     }
@@ -87,6 +93,7 @@ public class ScreenVideoFrameSource extends VideoFrameSource{
             }
 
         }
+        mState = State.kStopped;
 
     }
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -107,6 +114,7 @@ public class ScreenVideoFrameSource extends VideoFrameSource{
 
                         if (mObserver != null)
                         {
+                            mState = State.kStarted;
                             mObserver.onStarted();
                         }
                         Log.d(TAG, "widthStride"+mSrcStride+"width:"+mSrcWidth+"heigth:"+mSrcHeight);
@@ -114,12 +122,7 @@ public class ScreenVideoFrameSource extends VideoFrameSource{
 //                    Log.d(TAG, "Stride = " + mSrcStride + " width = " + mSrcWidth + "height = " + mSrcHeight + " bufferisize" + buffer.remaining());
                     if (mFrameCallback != null)
                     {
-                        if (bytebuffer == null)
-                        {
-                            bytebuffer = new byte[buffer.remaining()];
-                        }
-                        buffer.get(bytebuffer, 0, bytebuffer.length);
-                        mFrameCallback.onVideoFrameComing(bytebuffer, mSrcStride, mSrcHeight);
+                        mFrameCallback.onVideoFrameComing(buffer, mSrcStride, mSrcHeight);
                     }
                 }
             } catch (Exception e) {

@@ -40,8 +40,10 @@ enum SrcDataType
 };
 enum StreamState
 {
-	StreamState_NONE,
+	StreamState_NONE = 0,
+	StreamState_STARTING,
 	StreamState_STARTED,
+	StreamState_STOPPING,
 	StreamState_STOPED
 };
 enum RotationMode

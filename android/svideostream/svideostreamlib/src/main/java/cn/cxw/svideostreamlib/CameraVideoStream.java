@@ -83,10 +83,10 @@ public class CameraVideoStream implements Camera.PreviewCallback{
     }
     @Override
     public void onPreviewFrame(byte[] bytes, Camera camera) {
-            if (mSVideoStream != null)
-            {
-                mSVideoStream.InpputVideoData(bytes);
-            }
+//            if (mSVideoStream != null)
+//            {
+//                mSVideoStream.InpputVideoData(bytes);
+//            }
         camera.addCallbackBuffer(bytes);
     }
     public boolean isPreview() {

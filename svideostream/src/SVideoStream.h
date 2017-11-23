@@ -9,6 +9,7 @@
 #include "AudioEncoderBase.h"
 #include "Common.h"
 #include "H264AacUtils.h"
+#include "StatsCollector.h"
 
 class sInputVideoInfo
 {
@@ -74,6 +75,8 @@ private:
 	CFFmpegMux* m_pFFmpegMux = nullptr;
 
 	IStreamEventObserver *m_pStreamEventObserver = nullptr;
+
+	CStatsCollector m_cStatsCollector;
 	void StreamEventNotify(StreamEvent event, StreamError error)
 	{
 		if (m_pStreamEventObserver != nullptr)
@@ -91,6 +94,10 @@ private:
 	
 public:
 	CSVideoStream();
+	StreamState GetState()
+	{
+		return m_eState;
+	}
 	void SetEnableAudio(bool enable)
 	{
 		m_bAudioEnable = enable;
@@ -157,9 +164,14 @@ public:
 	{
 		m_pStreamEventObserver = observer;
 	}
+	void GetStatsReports(StatsReports* reports)
+	{
+		m_cStatsCollector.UpdateStats();
+		m_cStatsCollector.GetStats(reports);
+	}
 	~CSVideoStream();
 
-	virtual void OnVideoEncodedData(uint8_t* data, int nsize, int64_t pts) override;
+	virtual void OnVideoEncodedData(uint8_t* data, int nsize, int64_t pts, int64_t dts) override;
 
 	virtual void OnAudioEncodedData(uint8_t* data, int nsize, int64_t pts) override;
 

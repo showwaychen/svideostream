@@ -12,6 +12,10 @@ enum VideoEncoderType
 	H264ENCODER_X264 = 0,
 	H264ENCODER_MEDIACODEC
 };
+enum SettingKeyValue
+{
+	SKV_H264ENCODERCONFIG = 0
+};
 class CSVideoStream_JniWrap: public CSVideoStream::IStreamEventObserver
 {
 
@@ -22,6 +26,8 @@ class CSVideoStream_JniWrap: public CSVideoStream::IStreamEventObserver
 
 	jobject m_jThiz;
 	jmethodID m_jEventCallback;
+
+	CMediaConfig m_H264Configs;
 
 	static CSVideoStream_JniWrap* GetInst(JNIEnv* jni, jobject j_object);
 public:
@@ -42,7 +48,11 @@ public:
 	static  void JNICALL nativeSetPublishUrl(JNIEnv *env, jobject thiz, jstring url);
 	static  void JNICALL nativeSetRecordPath(JNIEnv *env, jobject thiz, jstring filename);
 	static  void JNICALL nativeSetAudioEnable(JNIEnv *env, jobject thiz, jboolean isenable);
-	static  jint JNICALL nativeInputVideoData(JNIEnv *env, jobject thiz, jbyteArray data, int size, long pts);
+	static  void JNICALL nativeSettingSet(JNIEnv *env, jobject thiz,jint key, jobject value);
+	static  jobjectArray JNICALL nativeGetStats(JNIEnv *env, jobject thiz);
+	static  jint JNICALL nativeGetState(JNIEnv *env, jobject thiz);
+
+	static  jint JNICALL nativeInputVideoData(JNIEnv *env, jobject thiz, jobject bytebuffer, int size, long pts);
 	static  jint JNICALL nativeInputAudioData(JNIEnv *env, jobject thiz, jbyteArray data, int size, long pts);
 	static void JNICALL native_Destroy(JNIEnv *env, jobject thiz);
 

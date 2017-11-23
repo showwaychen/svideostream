@@ -41,7 +41,7 @@ class CVideoEncoderMediaCodec :public CVideoEncoderBase
 	jfieldID m_jinfo_pts;
 	jfieldID m_jinfo_buffer;
 	static jobject NewObject(JNIEnv* jni, jclass pjclass, const char* name, const char* signature, ...);
-
+	void ConfigSetting(JNIEnv* jnienv);
 public:
 	CVideoEncoderMediaCodec();
 	virtual int OpenEncoder();

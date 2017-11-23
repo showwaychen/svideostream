@@ -14,7 +14,7 @@ static FILE *ppcmFile = NULL;
 #ifdef SAVE_AAC_FILE
 static FILE *paacFile = NULL;
 #endif
-CSVideoStream::CSVideoStream()
+CSVideoStream::CSVideoStream() :m_cStatsCollector(this)
 {
 
 }
@@ -292,12 +292,12 @@ CSVideoStream::~CSVideoStream()
 	}
 }
 
-void CSVideoStream::OnVideoEncodedData(uint8_t* data, int nsize, int64_t pts)
+void CSVideoStream::OnVideoEncodedData(uint8_t* data, int nsize, int64_t pts, int64_t dts)
 {
 	//LOGI << "video data size = " << nsize << "pts = " << pts;
 	if (m_eStreamType == ST_RECORD)
 	{
-		m_pFFmpegMux->WriteVideoData(data, nsize, pts);
+		m_pFFmpegMux->WriteVideoData(data, nsize, pts, dts);
 	}
 	else if (m_eStreamType == ST_LIVE)
 	{

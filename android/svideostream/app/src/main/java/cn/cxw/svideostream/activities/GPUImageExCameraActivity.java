@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -15,11 +16,14 @@ import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import cn.cxw.svideostream.R;
+import cn.cxw.svideostream.application.GlobalSetting;
+import cn.cxw.svideostream.application.GlobalVideoStream;
 import cn.cxw.svideostream.application.MainApplication;
 import cn.cxw.svideostream.widget.SurfaceViewPreview;
 import cn.cxw.svideostreamlib.CommonSetting;
 import cn.cxw.svideostreamlib.GPUImageExFrameSource;
 import cn.cxw.svideostreamlib.SVideoStream;
+import cn.cxw.svideostreamlib.StatsReport;
 import cn.cxw.svideostreamlib.VideoFrameSource;
 import cn.cxw.svideostreamlib.VideoStreamConstants;
 import cn.cxw.svideostreamlib.VideoStreamProxy;
@@ -30,6 +34,7 @@ import cn.cxw.svideostreamlib.VideoStreamProxy;
 
 public class GPUImageExCameraActivity extends AppCompatActivity implements View.OnClickListener, SVideoStream.IStreamEventObserver, VideoFrameSource.VideoFrameSourceObserver {
 
+    static String TAG = GPUImageExCameraActivity.class.getCanonicalName();
     public  static void Show(Context context)
     {
         Intent intent = new Intent(context, GPUImageExCameraActivity.class);
@@ -45,7 +50,7 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
     FrameLayout mflCamera = null;
     Button mbtnFilter = null;
     GPUImageExFrameSource mGPUVideoSource = null;
-    VideoStreamProxy mVideoStream = null;
+    VideoStreamProxy mVideoStream = GlobalVideoStream.getGPUImageSourceOwn();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,14 +86,23 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
         CommonSetting.nativeSetLogLevel(VideoStreamConstants.LS_INFO);
         mGPUVideoSource = new GPUImageExFrameSource();
         mGPUVideoSource.setObserver(this);
-        mVideoStream = new VideoStreamProxy();
         mVideoStream.setVideoFrameSource(mGPUVideoSource);
         mVideoStream.setStreamEventObserver(this);
 
-
+//        Log.d(TAG, MainApplication.getInstance().getSetting().getH264EncoderConfigs().toString());
         mVideoStream.setVideoStreamSetting(MainApplication.getInstance().getSetting());
         mGPUVideoSource.setCameraSize(640, 480);
         mGPUVideoSource.setPreviewView(m_svDisplay);
+
+        StatsReport[] reports = mVideoStream.getStatsReport();
+        if (reports == null)
+        {
+            return ;
+        }
+        for (int i = 0; i < reports.length; i++)
+        {
+            Log.d(TAG, reports[i].toString());
+        }
 
 
     }
@@ -96,7 +110,7 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
     {
         if (islive)
         {
-            String liveurl = "";
+            String liveurl = GlobalSetting.getLiveUrl();
             if (!liveurl.isEmpty())
             {
                 mVideoStream.setPublishUrl(liveurl);
@@ -131,6 +145,7 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
     protected void onDestroy() {
         releaseWakeLock();
         super.onDestroy();
+        mVideoStream.stopStream();
     }
     // 获取电源锁
     protected void acquireWakeLock() {
@@ -236,8 +251,14 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
 
     @Override
     public void onStarted() {
-        m_cbRecord.setEnabled(true);
-        mcbLive.setEnabled(true);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                m_cbRecord.setEnabled(true);
+                mcbLive.setEnabled(true);
+            }
+        });
+
     }
 
     static class GPUImageFilterTools {

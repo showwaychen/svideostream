@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "Common.h"
 #include "Log.h"
+#include "MediaConfig.h"
 
 //source format only supports i420
 class CVideoEncoderBase
@@ -51,7 +52,7 @@ public:
 	class IEncodedCallBack
 	{
 	public:
-		virtual void OnVideoEncodedData(uint8_t* data, int nsize, int64_t pts) = 0;
+		virtual void OnVideoEncodedData(uint8_t* data, int nsize, int64_t pts, int64_t dts) = 0;
 	};
 protected:
 	int m_nWidth;
@@ -61,8 +62,15 @@ protected:
 	int m_nGop;
 	bool m_bReqKeyFrame = false;
 
+	CMediaConfig m_H264Configs;
 	IEncodedCallBack* m_pCallBack = nullptr;
+
+	static int StringToProfile(const std::string& profile);
 public:
+	static const char kProfile[];
+	static const char kPreset[];
+	static const char kTune[];
+	static const char kRcMethod[];
 	void SetEncodedCallBack(IEncodedCallBack *callback)
 	{
 		m_pCallBack = callback;
@@ -84,6 +92,10 @@ public:
 		m_nBitrate = bitrate;
 		m_nFps = fps;
 	}
+	void SetConfigs(CMediaConfig configs)
+	{
+		m_H264Configs = configs;
+	}
 	virtual int OpenEncoder() = 0;
 	virtual int StartEncode() = 0;
 	virtual int CloseEncoder() = 0;
@@ -95,4 +107,6 @@ public:
 
 	}
 };
+
+
 #endif 

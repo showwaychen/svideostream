@@ -40,4 +40,47 @@
             app:entrySummaries="@array/pref_entries_videofps"
             />
     </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/h264_setting_general_title">
+
+        <cn.cxw.svideostream.preference.SvsListPreference
+            android:key="@string/pref_key_h264profile"
+            android:title="@string/pref_h264profile_title"
+            android:defaultValue="baseline"
+            android:summary="baseline"
+            android:entries="@array/pref_entries_h264profile"
+            android:entryValues="@array/pref_entries_h264profile"
+            app:entrySummaries="@array/pref_entries_h264profile"
+            />
+
+        <cn.cxw.svideostream.preference.SvsListPreference
+            android:key="@string/pref_key_x264preset"
+            android:title="@string/pref_x264preset_title"
+            android:defaultValue="superfast"
+            android:summary="superfast"
+            android:entries="@array/pref_entries_x264preset"
+            android:entryValues="@array/pref_entries_x264preset"
+            app:entrySummaries="@array/pref_entries_x264preset"
+            />
+
+        <cn.cxw.svideostream.preference.SvsListPreference
+            android:key="@string/pref_key_x264tune"
+            android:title="@string/pref_x264tune_title"
+            android:defaultValue="zerolatency"
+            android:summary="zerolatency"
+            android:entries="@array/pref_entries_x264tune"
+            android:entryValues="@array/pref_entries_x264tune"
+            app:entrySummaries="@array/pref_entries_x264tune"
+            />
+
+        <cn.cxw.svideostream.preference.SvsListPreference
+            android:key="@string/pref_key_rcmethod"
+            android:title="@string/pref_rcmethod_title"
+            android:defaultValue="RC_ABR"
+            android:summary="RC_ABR"
+            android:entries="@array/pref_entries_rcmethod"
+            android:entryValues="@array/pref_entries_rcmethod"
+            app:entrySummaries="@array/pref_entries_rcmethod"
+            />
+    </PreferenceCategory>
 </PreferenceScreen>

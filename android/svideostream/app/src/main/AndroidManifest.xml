@@ -26,21 +26,21 @@
         </activity>
         <activity
             android:name=".activities.CameraActivity"
-            android:screenOrientation="portrait"
             ></activity>
         <activity
             android:name=".activities.SettingActivity"
-            android:screenOrientation="portrait"
             android:theme="@style/AppTheme"
             ></activity>
         <activity
             android:name=".activities.GPUImageExCameraActivity"
-            android:screenOrientation="portrait"
             ></activity>
         <activity
             android:name=".activities.ScreenCaptureActivity"
-            android:screenOrientation="portrait"
+            android:launchMode="singleTask"
             ></activity>
+
+        <service android:name=".application.StreamService" >
+        </service>
     </application>
 
 </manifest>

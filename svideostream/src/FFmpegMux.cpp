@@ -275,7 +275,7 @@ void CFFmpegMux::StopMux()
 }
 
 
-int CFFmpegMux::WriteVideoData(uint8_t* vdata, int nsize, int64_t npts)
+int CFFmpegMux::WriteVideoData(uint8_t* vdata, int nsize, int64_t npts, int64_t ndts)
 {
 	if (vdata == nullptr || nsize < 5)
 	{
@@ -328,7 +328,8 @@ int CFFmpegMux::WriteVideoData(uint8_t* vdata, int nsize, int64_t npts)
 	m_pktVideo.size = nsize;
 	m_pktVideo.stream_index = m_pVideoStream->index;
 	m_pktVideo.pos = -1;
-	m_nLastVideoPts = m_pktVideo.dts = m_pktVideo.pts = av_rescale_q(npts, (AVRational){ 1, 1000 }, m_pVideoStream->time_base);
+	m_nLastVideoPts =  m_pktVideo.pts = av_rescale_q(npts, (AVRational){ 1, 1000 }, m_pVideoStream->time_base);
+	m_pktVideo.dts = av_rescale_q(ndts, (AVRational){ 1, 1000 }, m_pVideoStream->time_base);
 	m_pktAudio.duration = m_pktVideo.pts - m_nLastVideoPts;
 	m_nLastVideoPts = m_pktVideo.pts;
 	LOGI << "video packet size = " << nsize << " dts = pts = " << m_pktVideo.pts<< "  inputvideo pts = "<<npts<<" index = "<<m_pktVideo.stream_index;
@@ -389,6 +390,5 @@ int CFFmpegMux::WriteAudioData(uint8_t* vdata, int nsize, int64_t npts)
 	if (0 != nRet) {
 		LOGE<<"av_write_frame failed. %s av_err2str(nRet)";
 	}
-
 	return nRet;
 }

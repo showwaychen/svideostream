@@ -30,7 +30,7 @@ bool CVideoEncoderX264::OnEncodeThread()
 		LOGE << "x264 callback is null";
 		return false;
 	}
-	m_pCallBack->OnVideoEncodedData(pHeaderNals[0].p_payload, pHeaderNals[0].i_payload + pHeaderNals[1].i_payload, -1);
+	m_pCallBack->OnVideoEncodedData(pHeaderNals[0].p_payload, pHeaderNals[0].i_payload + pHeaderNals[1].i_payload, -1, -1);
 
 	int nUOffset = m_nWidth * m_nHeight;
 	int nVOffset = m_nWidth * m_nHeight + m_nWidth * m_nHeight / 4;
@@ -60,7 +60,7 @@ bool CVideoEncoderX264::OnEncodeThread()
 		}
 		
 		if (nNalsSize > 0) {
-			m_pCallBack->OnVideoEncodedData(pNals[0].p_payload, nNalsSize, picOut.i_pts);
+			m_pCallBack->OnVideoEncodedData(pNals[0].p_payload, nNalsSize, picOut.i_pts, picOut.i_dts);
 		}
 		delete imagedata;
 	}
@@ -69,7 +69,52 @@ bool CVideoEncoderX264::OnEncodeThread()
 	return false;
 }
 
-CVideoEncoderX264::CVideoEncoderX264():
+int StringToX264Rcmethod(const std::string& rcmethod)
+{
+	if (rcmethod == "RC_ABR")
+	{
+		return X264_RC_ABR;
+	}
+	else if (rcmethod == "RC_CQP")
+	{
+		return X264_RC_CQP;
+	}
+	else if (rcmethod == "RC_CRF")
+	{
+		return X264_RC_CRF;
+	}
+	return X264_RC_ABR;
+}
+void CVideoEncoderX264::ConfigSetting(x264_param_t* x264param)
+{
+	std::string value;
+	if (m_H264Configs.GetConfigFromKey(kProfile, value))
+	{
+		x264_param_apply_profile(x264param, value.c_str());
+		LOGD << "x264_param_apply_profile  = " << value;
+	}
+	if (m_H264Configs.GetConfigFromKey(kPreset, value))
+	{
+		std::string strtune;
+		if (m_H264Configs.GetConfigFromKey(kTune, strtune))
+		{
+			x264_param_default_preset(x264param, value.c_str(), strtune.c_str());
+		}
+		else
+		{
+			x264_param_default_preset(x264param, value.c_str(), NULL);
+		}
+		LOGD << "x264_param_default_preset  preset = " << value<< "  tune = "<<strtune;
+
+	}
+	if (m_H264Configs.GetConfigFromKey(kRcMethod, value))
+	{
+		x264param->rc.i_rc_method = StringToX264Rcmethod(value);
+		LOGD << "i_rc_method  = " << value;
+	}
+}
+
+CVideoEncoderX264::CVideoEncoderX264() :
 m_hEncodeThread(this, &CVideoEncoderX264::OnEncodeThread, "x264encodethread")
 {
 	m_qVideoFrameQ.SetMaxCount(3);
@@ -80,10 +125,7 @@ int CVideoEncoderX264::OpenEncoder()
 	x264_param_t x264param;
 
 	//Init x264
-	x264_param_default_preset(&x264param, "superfast", "zerolatency");
-	x264_param_apply_profile(&x264param, "baseline");
-
-	x264param.rc.i_rc_method = X264_RC_ABR;
+	ConfigSetting(&x264param);
 	x264param.rc.i_bitrate = m_nBitrate / 1000;
 	x264param.i_timebase_num = 1;
 	x264param.i_timebase_den = m_nFps;
@@ -91,7 +133,6 @@ int CVideoEncoderX264::OpenEncoder()
 	x264param.i_fps_den = x264param.i_timebase_num * 1;
 	x264param.i_keyint_min = m_nGop / 2;
 	x264param.i_keyint_max = m_nGop;
-	x264param.i_bframe = 0;
 
 	x264param.b_repeat_headers = 0;
 	//x264param.b_annexb = pCtx->bVideoAnnexb ? 1 : 0;
@@ -128,6 +169,7 @@ int CVideoEncoderX264::PushData(uint8_t *imagedata, int nsize, int64_t pts)
 
 sH264CodecInfo CVideoEncoderX264::GetCodecInfo()
 {
+	std::string value;
 	sH264CodecInfo info;
 	info.m_bAnnexB = true;
 	info.m_nBitrate = m_nBitrate;
@@ -136,7 +178,8 @@ sH264CodecInfo CVideoEncoderX264::GetCodecInfo()
 	info.m_nHeight = m_nHeight;
 	info.m_nWidth = m_nWidth;
 	info.m_nLevel = 21;
-	info.m_nProfile = 66;
+	m_H264Configs.GetConfigFromKey(kProfile, value);
+	info.m_nProfile = StringToProfile(value);
 	return info;
 }
 

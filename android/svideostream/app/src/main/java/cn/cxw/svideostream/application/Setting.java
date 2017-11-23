@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
 import cn.cxw.svideostream.R;
+import cn.cxw.svideostreamlib.MediaConfig;
+import cn.cxw.svideostreamlib.VideoStreamConstants;
 import cn.cxw.svideostreamlib.VideoStreamSetting;
 
 /**
@@ -65,4 +67,26 @@ public class Setting extends VideoStreamSetting {
             return super.getVideoFps();
         }
     }
+
+    @Override
+    public MediaConfig getH264EncoderConfigs() {
+        MediaConfig configs = super.getH264EncoderConfigs();
+        String key = mAppContext.getString(R.string.pref_key_h264profile);
+        String value = mSharedPreference.getString(key, VideoStreamConstants.VALUE_BASELINE);
+        configs.putConfig(VideoStreamConstants.KEY_PROFILE, value);
+
+         key = mAppContext.getString(R.string.pref_key_x264preset);
+         value = mSharedPreference.getString(key, VideoStreamConstants.VALUE_superfast);
+        configs.putConfig(VideoStreamConstants.KEY_PRESET, value);
+
+         key = mAppContext.getString(R.string.pref_key_x264tune);
+         value = mSharedPreference.getString(key, VideoStreamConstants.VALUE_zerolatency);
+        configs.putConfig(VideoStreamConstants.KEY_TUNE, value);
+
+         key = mAppContext.getString(R.string.pref_key_rcmethod);
+         value = mSharedPreference.getString(key, VideoStreamConstants.VALUE_rc_abr);
+        configs.putConfig(VideoStreamConstants.KEY_RC_METHOD, value);
+        return configs;
+    }
+
 }

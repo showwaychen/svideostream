@@ -65,7 +65,7 @@ public:
 	}
 	int StartMux();
 	void StopMux();
-	int WriteVideoData(uint8_t* vdata, int nsize, int64_t npts);
+	int WriteVideoData(uint8_t* vdata, int nsize, int64_t npts, int64_t ndts);
 	int WriteAudioData(uint8_t* vdata, int nsize, int64_t npts);
 };
 #endif 

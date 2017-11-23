@@ -7,7 +7,6 @@ import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -16,7 +15,8 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import cn.cxw.svideostream.R;
-import cn.cxw.svideostream.application.MainApplication;
+import cn.cxw.svideostream.application.GlobalVideoStream;
+import cn.cxw.svideostream.application.StreamService;
 import cn.cxw.svideostream.utils.PermissionCheck;
 import cn.cxw.svideostreamlib.CommonSetting;
 import cn.cxw.svideostreamlib.ScreenVideoFrameSource;
@@ -32,7 +32,7 @@ public class ScreenCaptureActivity extends AppCompatActivity implements View.OnC
     ScreenVideoFrameSource mScreenVideoFrameSource = null;
     private MediaProjectionManager mProjectionManager;
     private MediaProjection mMediaProjection;
-    VideoStreamProxy mVideoStream = null;
+    VideoStreamProxy mVideoStream = GlobalVideoStream.getScreenCaptureOwn();
     private static final int PERMISSION_CODE = 100;//1;
     public  static void Show(Context context)
     {
@@ -47,19 +47,23 @@ public class ScreenCaptureActivity extends AppCompatActivity implements View.OnC
     boolean misLive = false;
 
     private static int nVersion;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_screen);
         PermissionCheck.Check(this, Manifest.permission.RECORD_AUDIO, PermissionCheck.MY_PERMISSIONS_REQUEST_OK);
+        Intent startIntent = new Intent(this, StreamService.class);
+        startService(startIntent);
         initView();
+
+
     }
     void initView()
     {
-        CommonSetting.nativeSetLogLevel(VideoStreamConstants.LS_INFO);
+        CommonSetting.nativeSetLogLevel(VideoStreamConstants.LS_WARNING);
         mScreenVideoFrameSource = new ScreenVideoFrameSource();
         mScreenVideoFrameSource.setObserver(this);
-        mVideoStream = new VideoStreamProxy();
         mVideoStream.setVideoFrameSource(mScreenVideoFrameSource);
         metWidth = (EditText)findViewById(R.id.et_width);
         metHeight = (EditText)findViewById(R.id.et_height);
@@ -70,7 +74,6 @@ public class ScreenCaptureActivity extends AppCompatActivity implements View.OnC
         mbtnScreenLive.setOnClickListener(this);
 
         nVersion = Build.VERSION.SDK_INT;
-        //int ver2 = android.os.Build.VERSION_CODES.FROYO;
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 mProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
@@ -86,15 +89,8 @@ public class ScreenCaptureActivity extends AppCompatActivity implements View.OnC
                     mMediaProjection = null;
                 }
         }
-
-//        if (recordJni != null) {
-//            recordJni.Stop();
-//            recordJni = null;
-//        }
-
-        //stop service
-//        Intent stopIntent = new Intent(this, MyService.class);
-//        stopService(stopIntent);
+        Intent stopIntent = new Intent(this, StreamService.class);
+        stopService(stopIntent);
     }
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -108,7 +104,6 @@ public class ScreenCaptureActivity extends AppCompatActivity implements View.OnC
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
-
         }
     }
     void startCapture(int width, int height)
@@ -121,28 +116,7 @@ public class ScreenCaptureActivity extends AppCompatActivity implements View.OnC
         mScreenVideoFrameSource.setupMediaProjection(mMediaProjection);
         mScreenVideoFrameSource.startScreenCapture();
     }
-    int  startStream(boolean islive)
-    {
-        mVideoStream.setVideoStreamSetting(MainApplication.getInstance().getSetting());
-        if (islive)
-        {
-            String liveurl = "";
-            if (!liveurl.isEmpty())
-            {
-                mVideoStream.setPublishUrl(liveurl);
-            }
-            else
-            {
-                return -1;
-            }
-        }
-        else
-        {
-            mVideoStream.setRecordPath(Environment.getExternalStorageDirectory() + "/svideostream.mp4");
 
-        }
-        return mVideoStream.startStream();
-    }
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.btn_screenstart)
@@ -170,7 +144,7 @@ public class ScreenCaptureActivity extends AppCompatActivity implements View.OnC
                 mScreenVideoFrameSource.stop();
                 mScreenVideoFrameSource = null;
             }
-            mVideoStream.stopStream();
+            StreamService.stopRecording(this);
             mbtnScreenLive.setEnabled(true);
             mbtnScreenRecord.setEnabled(true);
         }
@@ -178,6 +152,23 @@ public class ScreenCaptureActivity extends AppCompatActivity implements View.OnC
 
     @Override
     public void onStarted() {
-        startStream(misLive);
+//        startStream(misLive);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (misLive)
+                {
+                    StreamService.readyToLive(ScreenCaptureActivity.this);
+                }
+                else
+                {
+                    StreamService.readyToRecord(ScreenCaptureActivity.this);
+                }
+                Intent MyIntent = new Intent(Intent.ACTION_MAIN);
+                MyIntent.addCategory(Intent.CATEGORY_HOME);
+                startActivity(MyIntent);
+            }
+        });
+
     }
 }

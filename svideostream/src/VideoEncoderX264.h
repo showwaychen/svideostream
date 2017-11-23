@@ -19,6 +19,8 @@ class CVideoEncoderX264 :public CVideoEncoderBase
 	CPlatformThreadEx<CVideoEncoderX264> m_hEncodeThread;
 	CBufferQuene<VideoFrame*, &VideoFrame::FreeFun> m_qVideoFrameQ;
 	bool OnEncodeThread();
+
+	void ConfigSetting(x264_param_t* x264param);
 public:
 	CVideoEncoderX264();
 	virtual int OpenEncoder();

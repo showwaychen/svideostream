@@ -2,6 +2,8 @@ package cn.cxw.svideostreamlib;
 
 import android.util.Log;
 
+import java.nio.ByteBuffer;
+
 import cxw.cn.gpuimageex.GPUImageBeautifyFilter;
 import cxw.cn.gpuimageex.GPUImageEx;
 import cxw.cn.gpuimageex.GPUImageFilter;
@@ -23,8 +25,13 @@ public class GPUImageExFrameSource extends VideoFrameSource implements GPUImageE
     }
     public void startPreview()
     {
+        if (mState == State.kStarted || mState == State.kStartting)
+        {
+            return ;
+        }
         if(mGpuImageEx.isPreview())
         {
+            mState = State.kStartting;
             Log.d(TAG," has already previewed");
             return ;
         }
@@ -34,6 +41,7 @@ public class GPUImageExFrameSource extends VideoFrameSource implements GPUImageE
     public void stopPreview()
     {
         mGpuImageEx.stopPreview();
+        mState = State.kStopped;
     }
     public void setCameraSize(int width, int height)
     {
@@ -48,12 +56,13 @@ public class GPUImageExFrameSource extends VideoFrameSource implements GPUImageE
         mGpuImageEx.setPreviewView(view);
     }
     @Override
-    public void OnProcessingFrame(byte[] framedata, int stride, int height) {
+    public void OnProcessingFrame(ByteBuffer framedata, int stride, int height) {
         if (stride != mSrcStride)
         {
             mSrcStride = stride;
             if (mObserver != null)
             {
+                mState = State.kStarted;
                 mObserver.onStarted();
             }
         }

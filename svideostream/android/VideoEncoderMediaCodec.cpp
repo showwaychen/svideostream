@@ -8,16 +8,6 @@ std::string CVideoEncoderMediaCodec::s_strMediaCodecClassName = "cn/cxw/svideost
 
 std::string CVideoEncoderMediaCodec::s_strOutputBufferInfoClassName = "cn/cxw/svideostreamlib/MediaCodecVideoEncoder$OutputBufferInfo";
 
-bool IsNull(JNIEnv* jni, jobject obj) {
-	bool ret = true;
-	jobject objtmp = jni->NewLocalRef(obj);
-	if (objtmp != NULL)
-	{
-		ret = false;
-		jni->DeleteLocalRef(objtmp);
-	}
-	return  ret;
-}
 libyuv::FourCC mapFromImageFormat(ImageFormat format)
 {
 	switch (format)
@@ -49,6 +39,7 @@ libyuv::FourCC mapFromImageFormat(ImageFormat format)
 		return libyuv::FOURCC_I420;
 		break;
 	}
+	return libyuv::FOURCC_I420;
 }
 bool CVideoEncoderMediaCodec::OnEncodeThread()
 {
@@ -164,7 +155,7 @@ bool CVideoEncoderMediaCodec::OnEncodeThread()
 			}*/
 			if (m_pCallBack != nullptr)
 			{
-				m_pCallBack->OnVideoEncodedData(payload, payload_size, pts);
+				m_pCallBack->OnVideoEncodedData(payload, payload_size, pts, pts);
 			}
 			else
 			{
@@ -194,6 +185,27 @@ jobject CVideoEncoderMediaCodec::NewObject(JNIEnv* jni, jclass pjclass, const ch
 		args);
 	va_end(args);
 	return jni->NewGlobalRef(obj);
+}
+
+void CVideoEncoderMediaCodec::ConfigSetting(JNIEnv* jnienv)
+{
+	jfieldID jgop = GetFieldID(jnienv, m_jMediaCodecClass, "gop", "I");
+	jfieldID jprofile = GetFieldID(jnienv, m_jMediaCodecClass, "profile", "Ljava/lang/String;");
+	jfieldID jrc_method = GetFieldID(jnienv, m_jMediaCodecClass, "rc_method", "Ljava/lang/String;");
+
+	jnienv->SetIntField(m_jMediaCodec, jgop, m_nGop);
+	std::string value;
+	if (m_H264Configs.GetConfigFromKey(kProfile, value))
+	{
+		jstring j_new_str = jnienv->NewString((jchar*)value.c_str(), value.length());
+		jnienv->SetObjectField(m_jMediaCodec, jprofile, j_new_str);
+		
+	}
+	if (m_H264Configs.GetConfigFromKey(kRcMethod, value))
+	{
+		jstring j_new_str = jnienv->NewString((jchar*)value.c_str(), value.length());
+		jnienv->SetObjectField(m_jMediaCodec, jrc_method, j_new_str);
+	}
 }
 
 CVideoEncoderMediaCodec::CVideoEncoderMediaCodec()
@@ -226,6 +238,7 @@ int CVideoEncoderMediaCodec::OpenEncoder()
 	int ret = 0;
 	AttachThreadScoped attachthread(GetJavaVM());
 	JNIEnv* jnienv = attachthread.env();
+	ConfigSetting(jnienv);
 	ret = jnienv->CallIntMethod(m_jMediaCodec, m_jOpenEncoderMethod, m_nWidth, m_nHeight, m_nBitrate, m_nFps);
 	return ret;
 }
@@ -261,6 +274,7 @@ int CVideoEncoderMediaCodec::PushData(uint8_t *imagedata, int nsize, int64_t pts
 
 sH264CodecInfo CVideoEncoderMediaCodec::GetCodecInfo()
 {
+	std::string value;
 	sH264CodecInfo info;
 	info.m_bAnnexB = true;
 	info.m_nBitrate = m_nBitrate;
@@ -269,6 +283,7 @@ sH264CodecInfo CVideoEncoderMediaCodec::GetCodecInfo()
 	info.m_nHeight = m_nHeight;
 	info.m_nWidth = m_nWidth;
 	info.m_nLevel = 21;
-	info.m_nProfile = 66;
+	m_H264Configs.GetConfigFromKey(kProfile, value);
+	info.m_nProfile = StringToProfile(value);
 	return info;
 }

@@ -1,6 +1,7 @@
 package cn.cxw.svideostreamlib;
 
 import android.annotation.TargetApi;
+import android.icu.text.LocaleDisplayNames;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -58,6 +59,9 @@ public class MediaCodecVideoEncoder {
 
     int width = 0;
     int height = 0;
+    String profile = VideoStreamConstants.VALUE_BASELINE;
+    String rc_method = VideoStreamConstants.VALUE_rc_abr;
+    int gop = 250;
 //    int bps = 0;
 //    int fps = 0;
     private ByteBuffer[] outputBuffers;
@@ -261,12 +265,37 @@ public class MediaCodecVideoEncoder {
                 break;
         }
     }
+    int stringToprofile()
+    {
+        if (profile.compareTo(VideoStreamConstants.VALUE_BASELINE) == 0)
+        {
+            return MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline;
+        }
+        return MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline;
+    }
+    int stringTorcmethod()
+    {
+        if (rc_method.compareTo(VideoStreamConstants.VALUE_rc_abr) == 0)
+        {
+            return MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR;
+        }
+        else if (rc_method.compareTo(VideoStreamConstants.VALUE_rc_cqp) == 0)
+        {
+            return  MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CQ;
+        }
+        else if (rc_method.compareTo(VideoStreamConstants.VALUE_rc_crf) == 0)
+        {
+            return MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR;
+        }
+        return MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CQ;
+    }
     public int openEncode(int width, int height, int kbps, int fps) {
         Log.d(TAG, " " + width + " " + height + " " + kbps + " " + fps);
         if (width <= 0 || kbps <= 0 || height <= 0 || fps <= 0)
         {
             return -1;
         }
+        Log.d(TAG, profile +  "  " +  rc_method + "  " + gop);
         this.width = width;
         this.height = height;
         EncoderProperties properties = null;
@@ -274,7 +303,7 @@ public class MediaCodecVideoEncoder {
         int keyFrameIntervalSec = 0;
         mime = H264_MIME_TYPE;
         properties = findHwEncoder(H264_MIME_TYPE, supportedH264HwCodecPrefixes, supportedColorList);
-        keyFrameIntervalSec = 20;
+        keyFrameIntervalSec = gop / fps;
         if (properties == null) {
             Log.d(TAG, "findHwEncoder failed");
             return -1;
@@ -285,8 +314,9 @@ public class MediaCodecVideoEncoder {
             MediaFormat format = MediaFormat.createVideoFormat(mime, width, height);
             format.setInteger(MediaFormat.KEY_BIT_RATE, kbps);
 //            format.setInteger("bitrate-mode", VIDEO_ControlRateConstant);
+            format.setInteger(MediaFormat.KEY_PROFILE, stringToprofile());
             format.setInteger(MediaFormat.KEY_BITRATE_MODE,
-                    MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CQ);
+                    stringTorcmethod());
             format.setInteger(MediaFormat.KEY_COLOR_FORMAT, properties.colorFormat);
             format.setInteger(MediaFormat.KEY_FRAME_RATE, fps);
             format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, keyFrameIntervalSec);
