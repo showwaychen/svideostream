@@ -77,6 +77,10 @@ public:
 	void AddBoolean(StatsValueName name, bool value);
 
 	const Value* FindValue(StatsValueName name) const;
+	void Clear()
+	{
+		m_values_.clear();
+	}
 	explicit CStatsReport(StatsType stype);
 	std::vector<Value> m_values_;
 	const StatsType m_type;

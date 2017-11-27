@@ -16,10 +16,14 @@ class CVideoEncoderX264 :public CVideoEncoderBase
 {
 	x264_t *m_pX264 = nullptr;
 	bool m_bAbort = false;
+	int m_nAvgEncodedTimeMs = 0;
 	CPlatformThreadEx<CVideoEncoderX264> m_hEncodeThread;
 	CBufferQuene<VideoFrame*, &VideoFrame::FreeFun> m_qVideoFrameQ;
 	bool OnEncodeThread();
-
+	void UpdateEncodeTime(int difftime)
+	{
+		m_nAvgEncodedTimeMs = (m_nAvgEncodedTimeMs + difftime) / 2;
+	}
 	void ConfigSetting(x264_param_t* x264param);
 public:
 	CVideoEncoderX264();
@@ -32,6 +36,8 @@ public:
 	virtual sH264CodecInfo GetCodecInfo();
 
 	virtual int StartEncode() override;
+
+	virtual EncoderRunTimeInfo GetRunTimeInfo();
 
 };
 #endif 

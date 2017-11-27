@@ -54,6 +54,13 @@ public:
 	public:
 		virtual void OnVideoEncodedData(uint8_t* data, int nsize, int64_t pts, int64_t dts) = 0;
 	};
+
+	class EncoderRunTimeInfo
+	{
+	public:
+		int m_nEncodeAvgTimeMs = 0;
+		int m_nBufferRemainNum = 0;
+	};
 protected:
 	int m_nWidth;
 	int m_nHeight;
@@ -96,6 +103,7 @@ public:
 	{
 		m_H264Configs = configs;
 	}
+	virtual EncoderRunTimeInfo GetRunTimeInfo(){ return EncoderRunTimeInfo(); };
 	virtual int OpenEncoder() = 0;
 	virtual int StartEncode() = 0;
 	virtual int CloseEncoder() = 0;

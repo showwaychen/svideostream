@@ -9,6 +9,8 @@ class CStatsCollector
 	CStatsReport m_cStatsReportImageProcess;
 	CStatsReport m_cStatsReportRtmpLive;
 
+	CSVideoStream* m_pPc = nullptr;
+
 public:
 	explicit CStatsCollector(CSVideoStream* pc);
 	void UpdateStats();

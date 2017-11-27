@@ -42,6 +42,13 @@ class CVideoEncoderMediaCodec :public CVideoEncoderBase
 	jfieldID m_jinfo_buffer;
 	static jobject NewObject(JNIEnv* jni, jclass pjclass, const char* name, const char* signature, ...);
 	void ConfigSetting(JNIEnv* jnienv);
+
+	int m_nAvgEncodedTimeMs = 0;
+
+	void UpdateEncodeTime(int difftime)
+	{
+		m_nAvgEncodedTimeMs = (m_nAvgEncodedTimeMs + difftime) / 2;
+	}
 public:
 	CVideoEncoderMediaCodec();
 	virtual int OpenEncoder();
@@ -53,6 +60,8 @@ public:
 	virtual int PushData(uint8_t *imagedata, int nsize, int64_t pts);
 
 	virtual sH264CodecInfo GetCodecInfo();
+
+	virtual EncoderRunTimeInfo GetRunTimeInfo() override;
 
 };
 #endif 

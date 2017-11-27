@@ -5,25 +5,26 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.os.PowerManager;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.FrameLayout;
+import android.widget.TableLayout;
 import android.widget.Toast;
 
 import cn.cxw.svideostream.R;
 import cn.cxw.svideostream.application.GlobalSetting;
 import cn.cxw.svideostream.application.GlobalVideoStream;
 import cn.cxw.svideostream.application.MainApplication;
+import cn.cxw.svideostream.widget.InfoHudViewHolder;
 import cn.cxw.svideostream.widget.SurfaceViewPreview;
 import cn.cxw.svideostreamlib.CommonSetting;
 import cn.cxw.svideostreamlib.GPUImageExFrameSource;
 import cn.cxw.svideostreamlib.SVideoStream;
-import cn.cxw.svideostreamlib.StatsReport;
 import cn.cxw.svideostreamlib.VideoFrameSource;
 import cn.cxw.svideostreamlib.VideoStreamConstants;
 import cn.cxw.svideostreamlib.VideoStreamProxy;
@@ -49,8 +50,12 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
     SurfaceViewPreview m_svDisplay = null;
     FrameLayout mflCamera = null;
     Button mbtnFilter = null;
+    TableLayout mHudView = null;
+    InfoHudViewHolder mHudViewHolder = null;
+
     GPUImageExFrameSource mGPUVideoSource = null;
     VideoStreamProxy mVideoStream = GlobalVideoStream.getGPUImageSourceOwn();
+    Handler mHandlerTimer = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -78,33 +83,42 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
         m_cbRecord.setOnClickListener(this);
         mcbLive.setOnClickListener(this);
         mbtnFilter.setOnClickListener(this);
-
-
+        mHudView = (TableLayout)findViewById(R.id.tl_info);
+        mHudViewHolder = new InfoHudViewHolder(this, mHudView);
     }
     void initCamera()
     {
+        mHandlerTimer = new Handler()
+        {
+            public void handleMessage(Message msg) {
+                switch (msg.what)
+                {
+                    case 0:
+                        if (mHudViewHolder != null)
+                        {
+                            mHudViewHolder.updateInfo(mVideoStream.getStatsReport());
+                        }
+                        if (GlobalVideoStream.getGPUImageSourceOwn().getState() == VideoStreamConstants.StreamState_STARTED)
+                        {
+                            sendEmptyMessageDelayed(0, 1000);
+                        }
+                        else
+                        {
+                            mHudViewHolder.updateInfo(null);
+                        }
+                        break;
+                }
+            };
+        };
         CommonSetting.nativeSetLogLevel(VideoStreamConstants.LS_INFO);
         mGPUVideoSource = new GPUImageExFrameSource();
         mGPUVideoSource.setObserver(this);
         mVideoStream.setVideoFrameSource(mGPUVideoSource);
         mVideoStream.setStreamEventObserver(this);
-
 //        Log.d(TAG, MainApplication.getInstance().getSetting().getH264EncoderConfigs().toString());
         mVideoStream.setVideoStreamSetting(MainApplication.getInstance().getSetting());
         mGPUVideoSource.setCameraSize(640, 480);
         mGPUVideoSource.setPreviewView(m_svDisplay);
-
-        StatsReport[] reports = mVideoStream.getStatsReport();
-        if (reports == null)
-        {
-            return ;
-        }
-        for (int i = 0; i < reports.length; i++)
-        {
-            Log.d(TAG, reports[i].toString());
-        }
-
-
     }
     int  StartStream(boolean islive)
     {
@@ -122,7 +136,7 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
         }
         else
         {
-            mVideoStream.setRecordPath(Environment.getExternalStorageDirectory() + "/svideostream.mp4");
+            mVideoStream.setRecordPath(GlobalSetting.getRecordPath() + "svideostream_camera.mp4");
 
         }
         return mVideoStream.startStream();
@@ -134,12 +148,10 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
     @Override
     protected void onResume() {
         super.onResume();
-        mGPUVideoSource.startPreview();
     }
     @Override
     protected void onPause() {
         super.onPause();
-        mGPUVideoSource.stopPreview();
     }
     @Override
     protected void onDestroy() {
@@ -232,17 +244,26 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
     }
 
     @Override
-    public void onEvent(final int eventid, int error) {
+    public void onEvent(final int eventid, final  int error) {
+        if (eventid == VideoStreamConstants.SE_StreamStarted)
+        {
+            mHandlerTimer.sendEmptyMessageDelayed(0, 1000);
+        }
+
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 switch (eventid)
                 {
                     case VideoStreamConstants.SE_StreamStarted:
+
                         Toast.makeText(GPUImageExCameraActivity.this, "stream started", Toast.LENGTH_LONG).show();
                         break;
                     case VideoStreamConstants.SE_LiveConnected:
                         Toast.makeText(GPUImageExCameraActivity.this, "live connected ok", Toast.LENGTH_LONG).show();
+                        break;
+                    case VideoStreamConstants.SE_StreamFailed:
+                        Toast.makeText(getApplicationContext(), VideoStreamConstants.getErrorDes(error), Toast.LENGTH_LONG).show();
                         break;
                 }
             }

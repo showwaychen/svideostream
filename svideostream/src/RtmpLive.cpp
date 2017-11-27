@@ -427,8 +427,13 @@ bool CRtmpLive::OnSendThread()
 	m_pRtmp->Link.timeout = RTMP_CONNECT_TIMEOUT;
 	if (0 != ConnectServer())
 	{
-		goto end;
+		RTMP_Free(m_pRtmp);
+		m_pRtmp = nullptr;
+		NotifyEvent(LE_CONNECT_ERROR, 0);
+
 		LOGE << "connected failed";
+		//goto end;
+		return false;
 	}
 	SetState(LS_CONNECTED);
 	NotifyEvent(LE_CONNECTED_SUCCESS, 0);
@@ -491,10 +496,11 @@ bool CRtmpLive::OnSendThread()
 end:
 	if (m_bStarted)
 	{
-		m_bStarted = false;
+	//m_bStarted = false;
 		NotifyEvent(LE_LIVE_ERROR, 0);
-		
+
 	}
+	//if ()
 	m_qAudio.SetEnable(false);
 	m_qVideo.SetEnable(false);
 	m_qVideo.Clear();
@@ -553,6 +559,14 @@ CRtmpLive::CRtmpLive() :
 m_hSendThread(this, &CRtmpLive::OnSendThread,"livethread")
 {
 
+}
+
+CRtmpLive::LiveRuntimeInfo CRtmpLive::GetRuntimeInfo()
+{
+	CRtmpLive::LiveRuntimeInfo info;
+	info.m_nAudioFramesNum = m_qAudio.Size();
+	info.m_nVideoFrameNum = m_qVideo.Size();
+	return info;
 }
 
 int CRtmpLive::StartLive()

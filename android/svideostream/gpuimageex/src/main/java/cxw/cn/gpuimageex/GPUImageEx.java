@@ -4,6 +4,7 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.opengl.GLES20;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
@@ -19,7 +20,7 @@ import cxw.cn.gpuimageex.util.TextureRotationUtil;
  * Created by cxw on 2017/11/5.
  */
 
-public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.CameraEventObserver {
+public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.CameraEventObserver, IPreviewView.IPreviewCallback {
     static String TAG = GPUImageEx.class.getCanonicalName();
     static final float CUBE[] = {
             -1.0f, -1.0f,
@@ -28,7 +29,21 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
             1.0f, 1.0f,
     };
 
+    //preview callback to startpreview or stoppreview
+    @Override
+    public void onSurfaceCreated(@NonNull IPreviewView.ISurfaceHolder holder, int width, int height) {
+            startPreView();
+    }
 
+    @Override
+    public void onSurfaceChanged(@NonNull IPreviewView.ISurfaceHolder holder, int width, int height) {
+
+    }
+
+    @Override
+    public void onSurfaceDestroyed(@NonNull IPreviewView.ISurfaceHolder holder) {
+        stopPreview();
+    }
 
 
     public interface GPUImageExObserver
@@ -66,6 +81,7 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
 
     ByteBuffer mCaptureBuffer = null;
     static GPUImageEx sGPUImageEx = new GPUImageEx();
+    IPreviewView mPreviewView = null;
     public static GPUImageEx getInst()
     {
         return sGPUImageEx;
@@ -87,14 +103,16 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
                 .order(ByteOrder.nativeOrder())
                 .asFloatBuffer();
         mOffScreenTextureBuffer.put(TextureRotationUtil.TEXTURE_NO_ROTATION).position(0);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             mbUseImageReaderThread = true;
         }
 
     }
     public void setPreviewView(IPreviewView pview)
     {
+        mPreviewView = pview;
         mGlRenderThread = new GlThreadPreview(pview);
+        pview.addRenderCallback(this);
 
     }
     public void setObserver(GPUImageExObserver observer)
@@ -153,6 +171,7 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
         @Override
         public void onInit() {
             mPreviewFilter.init();
+//            startPreView();
         }
 
         @Override
@@ -178,6 +197,10 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
     }
     void startPreviewGlThread()
     {
+        if (mGlRenderThread == null)
+        {
+            mGlRenderThread = new GlThreadPreview(mPreviewView);
+        }
         if (mbUseImageReaderThread && mGlProcessThread != null)
         {
             mGlRenderThread.setSharedContext(mGlProcessThread.getEglContext());
@@ -199,7 +222,7 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
             @Override
             public void onImageAvailable(ImageReader reader) {
                 Image image = null;
-                image = reader.acquireLatestImage();
+                image = reader.acquireNextImage();
                 if (image != null) {
                     try {
                         Image.Plane[] planes = image.getPlanes();
@@ -223,12 +246,17 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
     }
     public void startPreView()
     {
+        if (isPreview())
+        {
+            Log.w(TAG, "has started preview");
+            return ;
+        }
         if (mbUseImageReaderThread) {
-            mGlProcessThread = new GlThreadImageReader(mGPUImageCamera.getCameraFrameWidth(), mGPUImageCamera.getCameraFrameHeight(), this);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                mGlProcessThread = new GlThreadImageReader(mGPUImageCamera.getCameraFrameWidth(), mGPUImageCamera.getCameraFrameHeight(), this);
                 mGlProcessThread.setImageAvailableListener(new ImageAvailable());
+                mGlProcessThread.start();
             }
-            mGlProcessThread.start();
             return ;
         }
         startPreviewGlThread();
@@ -239,9 +267,10 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
         {
             mGlProcessThread.stopRender();
             mGlProcessThread.release();
-
+            mGlProcessThread = null;
         }
         mGlRenderThread.stopRender();
+        mGlRenderThread = null;
     }
     public boolean isFrontCamera() {
         return mGPUImageCamera.isFrontCamera();

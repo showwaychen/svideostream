@@ -83,4 +83,11 @@
                 android:visibility="invisible"/>
         </LinearLayout>
         </RelativeLayout>
+    <TableLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/tl_info"
+        android:background="@color/transparent_dark"
+        android:layout_centerInParent="true">
+    </TableLayout>
 </RelativeLayout>

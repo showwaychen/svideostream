@@ -11,6 +11,13 @@
 class CRtmpLive
 {
 public:
+	class LiveRuntimeInfo
+	{
+	public:
+		int m_nAudioFramesNum = 0;
+		int m_nVideoFrameNum = 0;
+		int m_nSendBandwidth = 0;
+	};
 	enum LiveState
 	{
 		LS_NONE,
@@ -160,6 +167,7 @@ public:
 	{
 		m_strCopyRight = copyright;
 	}
+	LiveRuntimeInfo GetRuntimeInfo();
 	int StartLive();
 	void StopLive();
 	void SetEventObserver(ILiveEventObserver *observer)

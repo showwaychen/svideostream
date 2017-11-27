@@ -1,4 +1,5 @@
 #include "VideoEncoderX264.h"
+#include"base/timeutils.h"
 
 
 
@@ -53,7 +54,9 @@ bool CVideoEncoderX264::OnEncodeThread()
 			picIn.i_type = X264_TYPE_KEYFRAME;
 		}
 		// Encode
+		int64_t earilertime = rtc::TimeMillis();
 		int nNalsSize = x264_encoder_encode(m_pX264, &pNals, &nNals, &picIn, &picOut);
+		UpdateEncodeTime(rtc::TimeSince(earilertime));
 		if (nNalsSize < 0) {
 			LOGE<<"Error encoding frame.";
 			break;
@@ -117,7 +120,7 @@ void CVideoEncoderX264::ConfigSetting(x264_param_t* x264param)
 CVideoEncoderX264::CVideoEncoderX264() :
 m_hEncodeThread(this, &CVideoEncoderX264::OnEncodeThread, "x264encodethread")
 {
-	m_qVideoFrameQ.SetMaxCount(3);
+	m_qVideoFrameQ.SetMaxCount(10);
 }
 
 int CVideoEncoderX264::OpenEncoder()
@@ -186,7 +189,16 @@ sH264CodecInfo CVideoEncoderX264::GetCodecInfo()
 int CVideoEncoderX264::StartEncode()
 {
 	m_bAbort = false;
+	m_nAvgEncodedTimeMs = 0;
 	m_qVideoFrameQ.SetEnable(true);
 	m_hEncodeThread.Start();
 	return 0;
+}
+
+CVideoEncoderBase::EncoderRunTimeInfo CVideoEncoderX264::GetRunTimeInfo()
+{
+	CVideoEncoderBase::EncoderRunTimeInfo info;
+	info.m_nBufferRemainNum = m_qVideoFrameQ.Size();
+	info.m_nEncodeAvgTimeMs = m_nAvgEncodedTimeMs;
+	return info;
 }

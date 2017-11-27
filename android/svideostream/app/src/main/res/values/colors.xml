@@ -10,4 +10,6 @@
     <color name="cyan">#00ffff</color>
     <color name="darkcyan">#008B8B</color>
     <color name="lightseagreen">#20b2aa</color>
+
+    <color name="transparent_dark">#77000000</color>
 </resources>

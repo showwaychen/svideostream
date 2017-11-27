@@ -1,7 +1,6 @@
 package cn.cxw.svideostreamlib;
 
 import android.annotation.TargetApi;
-import android.icu.text.LocaleDisplayNames;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -314,7 +313,9 @@ public class MediaCodecVideoEncoder {
             MediaFormat format = MediaFormat.createVideoFormat(mime, width, height);
             format.setInteger(MediaFormat.KEY_BIT_RATE, kbps);
 //            format.setInteger("bitrate-mode", VIDEO_ControlRateConstant);
+            //only support baseline
             format.setInteger(MediaFormat.KEY_PROFILE, stringToprofile());
+            format.setInteger(MediaFormat.KEY_LEVEL, MediaCodecInfo.CodecProfileLevel.AVCLevel21);
             format.setInteger(MediaFormat.KEY_BITRATE_MODE,
                     stringTorcmethod());
             format.setInteger(MediaFormat.KEY_COLOR_FORMAT, properties.colorFormat);

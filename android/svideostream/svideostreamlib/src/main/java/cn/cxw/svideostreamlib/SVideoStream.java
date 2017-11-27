@@ -164,10 +164,11 @@ public class SVideoStream implements AudioRecorder.Listener {
         }
         else
         {
-            if (m_AudioRecord != null)
-            {
-                m_AudioRecord.stop();
-            }
+//            if (m_AudioRecord != null)
+//            {
+//                m_AudioRecord.stop();
+//            }
+            StopStream();
             m_IsStart = false;
             Log.d(TAG, "start stream error ");
         }
@@ -175,6 +176,7 @@ public class SVideoStream implements AudioRecorder.Listener {
     }
     public int StopStream()
     {
+        Log.d(TAG, "StopStream");
         if (m_AudioRecord != null)
         {
             m_AudioRecord.stop();
@@ -183,7 +185,7 @@ public class SVideoStream implements AudioRecorder.Listener {
         m_IsStart = false;
         return ret;
     }
-    public void PauseStream()
+    public void pauseStream()
     {
         if (!m_IsStart)
         {
@@ -196,7 +198,7 @@ public class SVideoStream implements AudioRecorder.Listener {
             mPauseTime = System.currentTimeMillis();
         }
     }
-    public void ResumeStream()
+    public void resumeStream()
     {
         if (!mIsPaused)
         {
@@ -294,8 +296,22 @@ public class SVideoStream implements AudioRecorder.Listener {
             nativeInputAudioData(buffer, size, pts);
     }
 
+    boolean isStreamOkByEvent(int eventid)
+    {
+        if (eventid == VideoStreamConstants.SE_StreamStarted || eventid == VideoStreamConstants.SE_LiveConnected ||
+                eventid == VideoStreamConstants.SE_RecordStartedSuccess || eventid == VideoStreamConstants.SE_StreamWarning)
+        {
+            return true;
+        }
+        return false;
+    }
    void nativeEventCallback(int event, int error)
    {
+       if (!isStreamOkByEvent(event))
+       {
+           Log.d(TAG,"isStreamOkByEvent false");
+           StopStream();
+       }
        if (mEventObserver != null)
        {
            mEventObserver.onEvent(event, error);

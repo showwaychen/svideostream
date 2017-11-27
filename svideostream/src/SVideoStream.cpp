@@ -1,7 +1,8 @@
 ﻿#include "SVideoStream.h"
 #include"Log.h"
 #include"libyuv.h"
-
+#include"base/timeutils.h"
+#include"base/nullsocketserver.h"
 //#define SAVE_YUV_FILE
 #ifdef SAVE_YUV_FILE
 static FILE *pyuvFile = NULL;
@@ -14,14 +15,27 @@ static FILE *ppcmFile = NULL;
 #ifdef SAVE_AAC_FILE
 static FILE *paacFile = NULL;
 #endif
-CSVideoStream::CSVideoStream() :m_cStatsCollector(this)
+
+//#define NOTIFY_MESSAGELOOPER(event, errorid) CMainMessageLooper::getInst()->InvokeAsyn<void>(SVS_FROM_HERE, rtc::Bind(&CSVideoStream::StreamEventNotify, this, event, errorid));
+//#define NOTIFY_MESSAGELOOPER(event, errorid) CMainMessageLooper::getInst()->InvokeAsyn<void>(SVS_FROM_HERE, rtc::Bind(&CSVideoStream::StreamEventNotify, this, event, errorid));
+CSVideoStream::CSVideoStream() :m_cStatsCollector(this),
+m_tWorkThread(new rtc::NullSocketServer())
 {
+	m_tWorkThread.SetName("CSVideoStream", nullptr);
+	m_tWorkThread.Start(nullptr);
+	m_pRtmpPublish = new CRtmpLive;
+	m_pFFmpegMux = new CFFmpegMux;
 
 }
 
 int CSVideoStream::StartStream()
 {
-	//InitParams();
+	if (m_eState == StreamState_STARTED || m_eState == StreamState_STARTING)
+	{
+		LOGW<<"has started already";
+		return 0;
+	}
+
 	LOGI << "video params srcstride = " << m_nVideoSrcStride << " srcwidth = " << m_nVideoSrcWidth <<
 		" srcheight = " << m_nVideoSrcHeight <<" format = "<< m_eVideoSrcFormat<< " rotation = " << m_eVideoRotation << " dstwidth = " <<
 		m_nVideoDstWidth << " dstheight = " << m_nVideoDstHeight << " bitrate = " << m_nVideoBitrate <<
@@ -55,13 +69,17 @@ int CSVideoStream::StartStream()
 		LOGE << "audio encoder is null";
 		return -1;
 	}
+	m_eState = StreamState_STARTING;
+	ResetMembers();
 	m_pVideoEncoder->SetEncodedCallBack(this);
 	m_pVideoEncoder->SetVideoParams(m_nVideoDstWidth, m_nVideoDstHeight, m_nVideoBitrate, m_nVideoFrameRate);
 	m_pVideoEncoder->SetGop(m_nVideoFrameRate * m_nVideoKeyFrameInterval);
 	LOGI << "video encoder params width = " << m_nVideoDstWidth << " height = " << m_nVideoDstHeight << " bitrate = " << m_nVideoBitrate << " fps = " << m_nVideoFrameRate;
 	if (m_pVideoEncoder->OpenEncoder() != 0)
 	{
-		StreamEventNotify(SE_StreamFailed, kSE_VideoEncoderOpenedFailed);
+		ASYNNOTIFY(SE_StreamFailed, kSE_VideoEncoderOpenedFailed);
+		m_eState = StreamState_NONE;
+		//StreamEventNotify(SE_StreamFailed, kSE_VideoEncoderOpenedFailed);
 		LOGE << "video encoder open error";
 		return -1;
 	}
@@ -72,7 +90,8 @@ int CSVideoStream::StartStream()
 		LOGI << "audio encoder params samplerate = " << m_nAudioSamplerate << " samplesize = " << m_nAudioSampleSize << " channels = " << m_nAudioChannels << " bitrate = 64000";
 		if (m_pAudioEncoder->OpenEncoder() != 0)
 		{
-			StreamEventNotify(SE_StreamFailed, kSE_AudioeEncoderOpenedFailed);
+			m_eState = StreamState_NONE;
+			ASYNNOTIFY(SE_StreamFailed, kSE_AudioeEncoderOpenedFailed);
 			m_pVideoEncoder->CloseEncoder();
 			m_pAudioEncoder->CloseEncoder();
 			LOGE << "audio encoder open error";
@@ -83,7 +102,6 @@ int CSVideoStream::StartStream()
 	if (m_eStreamType == ST_LIVE)
 	{
 		m_bIsLiveConnected = false;
-		m_pRtmpPublish = new CRtmpLive;
 		m_pRtmpPublish->SetUrl(m_strPublishUrl);
 		m_pRtmpPublish->SetEventObserver(this);
 		m_pRtmpPublish->SetH264CodecInfo(m_pVideoEncoder->GetCodecInfo());
@@ -98,17 +116,19 @@ int CSVideoStream::StartStream()
 		}
 		if (0 != m_pRtmpPublish->StartLive())
 		{
+			m_eState = StreamState_NONE;
+			ASYNNOTIFY(SE_StreamFailed, kSE_UnknowError);
 			m_pVideoEncoder->CloseEncoder();
 			if (m_pAudioEncoder != nullptr)
 			{
 				m_pAudioEncoder->CloseEncoder();
 			}
+
 			return -1;
 		}
 	}
 	else if (m_eStreamType == ST_RECORD)
 	{
-		m_pFFmpegMux = new CFFmpegMux;
 		m_pFFmpegMux->SetFileName(m_strFileName);
 		m_pFFmpegMux->SetH264CodecInfo(m_pVideoEncoder->GetCodecInfo());
 		if (m_bAudioEnable)
@@ -122,7 +142,8 @@ int CSVideoStream::StartStream()
 		}
 		if (0 != m_pFFmpegMux->StartMux())
 		{
-			StreamEventNotify(SE_StreamFailed, kSE_UnknowError);
+			m_eState = StreamState_NONE;
+			ASYNNOTIFY(SE_StreamFailed, kSE_UnknowError);
 			m_pVideoEncoder->CloseEncoder();
 			if (m_pAudioEncoder != nullptr)
 			{
@@ -163,20 +184,22 @@ int CSVideoStream::StartStream()
 		}
 	}
 #endif
-	m_eState = StreamState_STARTED;
-	StreamEventNotify(SE_StreamStarted, kSE_NoneError);
+	if (m_eStreamType == ST_RECORD)
+	{
+		m_eState = StreamState_STARTED;
+		ASYNNOTIFY(SE_StreamStarted, kSE_NoneError);
+	}
 	return 0;
 }
 
 int CSVideoStream::StopStream()
 {
-	if (m_eState != StreamState_STARTED)
+	LOGD << "StopStream";
+	if (m_eState != StreamState_STARTED && m_eState != StreamState_STARTING)
 	{
 		LOGD << "stream hadn't started";
 		return 0;
 	}
-
-
 	if (m_pVideoEncoder != nullptr)
 	{
 		m_pVideoEncoder->CloseEncoder();
@@ -234,11 +257,14 @@ int CSVideoStream::InputVideoData(uint8_t* data, int nszie, int64_t npts)
 		return 0;
 	}
 	//LOGD << "video frame size = " << nszie;
+	UpdateAvgFps(npts);
 	m_nCurPts = npts;
 	if (m_eSrcDataType == SDT_IMAGEDATA)
 	{
 		memcpy(m_pSrcImageData, data, nszie);
+		int64_t earilertime = rtc::TimeMillis();
 		ImagePreProcess();
+		UpdateAvgPreProcessTime(rtc::TimeSince(earilertime));
 		return m_pVideoEncoder->PushData(m_pDstImageData, m_nDstImageDataSize, m_nCurPts);
 	}
 	return 0;
@@ -274,6 +300,7 @@ int CSVideoStream::SetWaterMarkData(uint8_t *data, int stride, int width, int he
 CSVideoStream::~CSVideoStream()
 {
 	StopStream();
+	m_tWorkThread.Stop();
 	if (m_pDstImageData != nullptr)
 	{
 		delete m_pDstImageData;
@@ -327,12 +354,11 @@ void CSVideoStream::OnAudioEncodedData(uint8_t* data, int nsize, int64_t pts)
 	}
 }
 
-void CSVideoStream::InitParams()
+void CSVideoStream::ResetMembers()
 {
-	m_nAudioBitrate = 64000;
-	m_nAudioSamplerate = 44100;
-	m_nAudioChannels = 1;
-	m_nAudioSampleSize = 2;
+	m_nAvg_fps = 0;
+	m_nLastFrameTimeMs = 0;
+	m_nAvgPreProcessTimeMs = 0;
 }
 
 void CSVideoStream::ImagePreProcess()
@@ -497,7 +523,9 @@ void CSVideoStream::NotifyEvent(CRtmpLive::LiveEvent event, int nerror)
 {
 	if (event == CRtmpLive::LE_CONNECTED_SUCCESS)
 	{
-		StreamEventNotify(SE_LiveConnected, kSE_NoneError);
+		m_eState = StreamState_STARTED;
+		ASYNNOTIFY(SE_StreamStarted, kSE_NoneError);
+		//NOTIFY_MESSAGELOOPER(SE_LiveConnected, kSE_NoneError);
 		m_bIsLiveConnected = true;
 	}
 	else if (event == CRtmpLive::LE_NEED_KEYFRAME)
@@ -509,11 +537,44 @@ void CSVideoStream::NotifyEvent(CRtmpLive::LiveEvent event, int nerror)
 	}
 	else if (event == CRtmpLive::LE_CONNECT_ERROR)
 	{
-		StreamEventNotify(SE_StreamFailed, kSE_LiveConnectFailed);
+		LOGW << "rtmp connected failed";
+		ASYNNOTIFY(SE_StreamFailed, kSE_LiveConnectFailed);
+	}
+	else if (event == CRtmpLive::LE_LIVE_ERROR)
+	{
+		ASYNNOTIFY(SE_StreamFailed, kSE_LiveFailed);
 	}
 	else if (event == CRtmpLive::LE_DISCONNECTED)
 	{
-		StreamEventNotify(SE_LiveDisconnected, kSE_NoneError);
+		ASYNNOTIFY(SE_LiveDisconnected, kSE_NoneError);
 	}
+}
+
+void CSVideoStream::UpdateAvgFps(int64_t npts)
+{
+	static int fcount = 0;
+
+	if (m_nLastFrameTimeMs == 0)
+	{
+		m_nLastFrameTimeMs = npts;
+		fcount = 0;
+		return;
+	}
+	int delta = npts - m_nLastFrameTimeMs;
+	if (delta >= sCaluateTimeMs)
+	{
+		m_nAvg_fps = (int)(fcount * 1000.0f / (float)delta);
+		fcount = 0;
+		m_nLastFrameTimeMs = npts;
+	}
+	else
+	{
+		fcount++;
+	}
+}
+
+void CSVideoStream::UpdateAvgPreProcessTime(int64_t tms)
+{
+	m_nAvgPreProcessTimeMs = (m_nAvgPreProcessTimeMs + tms) / 2;
 }
 

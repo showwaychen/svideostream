@@ -124,6 +124,14 @@ public class VideoStreamProxy implements VideoFrameSource.OnVideoFrameComing {
         return ret;
     }
 
+    public void  pauseStream()
+    {
+         mSVideoStream.pauseStream();
+    }
+    public void resumeStream()
+    {
+        mSVideoStream.resumeStream();
+    }
     public int stopStream()
     {
         mStreamHeight = mStreamWidth = 0;

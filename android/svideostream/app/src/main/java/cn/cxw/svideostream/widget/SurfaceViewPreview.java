@@ -91,7 +91,8 @@ public class SurfaceViewPreview extends SurfaceView implements IPreviewView {
             mHeight = 0;
 
             ISurfaceHolder surfaceHolder = new InternalSurfaceHolder( mSurfaceHolder);
-            for (IPreviewCallback renderCallback : mRenderCallback) {
+            Set<IPreviewCallback> tmpCallback = new HashSet<>(mRenderCallback);
+            for (IPreviewCallback renderCallback : tmpCallback) {
                 renderCallback.onSurfaceCreated(surfaceHolder, 0, 0);
             }
         }
@@ -105,7 +106,8 @@ public class SurfaceViewPreview extends SurfaceView implements IPreviewView {
             mHeight = 0;
 
             ISurfaceHolder surfaceHolder = new InternalSurfaceHolder( mSurfaceHolder);
-            for (IPreviewCallback renderCallback : mRenderCallback) {
+            Set<IPreviewCallback> tmpCallback = new HashSet<>(mRenderCallback);
+            for (IPreviewCallback renderCallback : tmpCallback) {
                 renderCallback.onSurfaceDestroyed(surfaceHolder);
             }
         }
@@ -122,7 +124,8 @@ public class SurfaceViewPreview extends SurfaceView implements IPreviewView {
             // mMeasureHelper.setVideoSize(width, height);
 
             ISurfaceHolder surfaceHolder = new InternalSurfaceHolder(mSurfaceHolder);
-            for (IPreviewCallback renderCallback : mRenderCallback) {
+            Set<IPreviewCallback> tmpCallback = new HashSet<>(mRenderCallback);
+            for (IPreviewCallback renderCallback : tmpCallback) {
                 renderCallback.onSurfaceChanged(surfaceHolder, width, height);
             }
         }

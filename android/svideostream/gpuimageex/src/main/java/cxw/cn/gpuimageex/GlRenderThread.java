@@ -39,6 +39,8 @@ public class GlRenderThread extends Thread {
     protected int mViewWidth = 0;
     protected int mViewHeight = 0;
     private boolean m_needResize = false;
+
+    protected String mThreadName = "GlRenderThread";
     public interface GLRenderer {
         void onInit();
         void onResize(int width, int height);
@@ -58,7 +60,7 @@ public class GlRenderThread extends Thread {
         mSurface = surface;
         mRenderer = renderer;
         mSyncToken = new Object();
-        Log.d(TAG, "new GlRenderThread");
+        Log.d(mThreadName, "new GlRenderThread");
 //        mShouldRender = shouldRender;
     }
     public  void setRender(GLRenderer render)
@@ -138,12 +140,12 @@ public class GlRenderThread extends Thread {
 
         mGL = mEglContext.getGL();
         GLES20.glFlush();
-        Log.d(TAG, "initGL over");
+        Log.d(mThreadName, "initGL over");
     }
 
     public void stopRender()
     {
-        Log.i(TAG, "requestDestroy");
+        Log.i(mThreadName, "requestDestroy");
         synchronized (mSyncToken) {
             mRequestDestroy = true;
             mSyncToken.notifyAll();
@@ -173,12 +175,12 @@ public class GlRenderThread extends Thread {
         requestRender();
     }
     public void run() {
-        setName("GlRenderThread " + getId());
+        setName(mThreadName + getId());
         initGL();
 
-        Log.d(TAG, "gl thread start run ");
+        Log.d(mThreadName, "gl thread start run ");
         if (mRenderer != null) {
-            mRenderer.onInit();;
+            mRenderer.onInit();
         }
         while (true) {
             synchronized (mSyncToken) {
@@ -218,5 +220,6 @@ public class GlRenderThread extends Thread {
         }
         mSurface = null;
         destoryGL();
+        Log.d(mThreadName, "gl thread stop run ");
     }
 }

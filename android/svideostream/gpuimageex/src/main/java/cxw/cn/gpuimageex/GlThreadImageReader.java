@@ -3,7 +3,7 @@ package cxw.cn.gpuimageex;
 import android.graphics.PixelFormat;
 import android.media.ImageReader;
 import android.os.Build;
-import android.support.v4.app.NavUtils;
+import android.util.Log;
 
 /**
  * Created by cxw on 2017/11/14.
@@ -17,7 +17,8 @@ public class GlThreadImageReader extends GlRenderThread{
     {
         mWidth = width;
         mHeight = height;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        mThreadName = "GlThreadImageReader";
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             mImageReader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2);
             setSurface(mImageReader.getSurface());
             setRender(renderer);
@@ -27,7 +28,7 @@ public class GlThreadImageReader extends GlRenderThread{
 
     public void setImageAvailableListener(ImageReader.OnImageAvailableListener listener)
     {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             if (mImageReader != null)
             {
                 mImageReader.setOnImageAvailableListener(listener, null);
@@ -36,8 +37,9 @@ public class GlThreadImageReader extends GlRenderThread{
     }
     public void release()
     {
+        Log.d(mThreadName, "gl thread stop");
         stopRender();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             if (mImageReader != null)
             {
                 mImageReader.setOnImageAvailableListener(null, null);
@@ -50,6 +52,7 @@ public class GlThreadImageReader extends GlRenderThread{
 
     @Override
     public synchronized void start() {
+        Log.d(mThreadName, "gl thread start");
         super.start();
         requestResize(mWidth, mHeight);
     }

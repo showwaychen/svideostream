@@ -60,7 +60,8 @@ enum StreamError
 	kSE_VideoEncoderOpenedFailed ,
 	kSE_AudioeEncoderOpenedFailed,
 	kSE_LiveConnectFailed,
-	kSE_RecordOpenFileFailed
+	kSE_RecordOpenFileFailed,
+	kSE_LiveFailed
 };
 enum StreamEvent
 {

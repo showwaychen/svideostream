@@ -106,35 +106,49 @@ public class ScreenCaptureActivity extends AppCompatActivity implements View.OnC
             mMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
         }
     }
-    void startCapture(int width, int height)
+    boolean startCapture(int width, int height)
     {
         if (width == 0 || height == 0)
         {
-            return ;
+            return false;
         }
         mScreenVideoFrameSource.setSize(width, height);
         mScreenVideoFrameSource.setupMediaProjection(mMediaProjection);
-        mScreenVideoFrameSource.startScreenCapture();
+        return mScreenVideoFrameSource.startScreenCapture();
     }
 
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.btn_screenstart)
         {
-            mbtnScreenLive.setEnabled(false);
-            mbtnScreenRecord.setEnabled(false);
-            misLive = false;
-            Toast.makeText(this,  "" + metWidth.getText() + "   " + metHeight.getText(), Toast.LENGTH_LONG).show();
-            startCapture(Integer.valueOf("" + metWidth.getText()), Integer.valueOf("" + metHeight.getText()));
+            if (startCapture(Integer.valueOf("" + metWidth.getText()), Integer.valueOf("" + metHeight.getText())))
+            {
+                mbtnScreenLive.setEnabled(false);
+                mbtnScreenRecord.setEnabled(false);
+                misLive = false;
+                Toast.makeText(this,  "" + metWidth.getText() + "   " + metHeight.getText(), Toast.LENGTH_LONG).show();
+            }
+            else
+            {
+                Toast.makeText(this, "failed to start Capture ", Toast.LENGTH_LONG).show();
+            }
+
+
 
         }
         else if (view.getId() == R.id.btn_screenstartlive)
         {
-            mbtnScreenLive.setEnabled(false);
-            mbtnScreenRecord.setEnabled(false);
-            misLive = true;
-            startCapture(Integer.valueOf("" + metWidth.getText()), Integer.valueOf("" + metHeight.getText()));
-
+            if (startCapture(Integer.valueOf("" + metWidth.getText()), Integer.valueOf("" + metHeight.getText())))
+            {
+                mbtnScreenLive.setEnabled(false);
+                mbtnScreenRecord.setEnabled(false);
+                misLive = true;
+                Toast.makeText(this,  "" + metWidth.getText() + "   " + metHeight.getText(), Toast.LENGTH_LONG).show();
+            }
+            else
+            {
+                Toast.makeText(this, "failed to start Capture ", Toast.LENGTH_LONG).show();
+            }
         }
         else if (view.getId() == R.id.btn_screenstop)
         {

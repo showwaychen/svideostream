@@ -65,6 +65,8 @@ public class VideoStreamConstants {
     public  static final int kSE_AudioeEncoderOpenedFailed = 3;
     public  static final int kSE_LiveConnectFailed = 4;
     public  static final int kSE_RecordOpenFileFailed = 5;
+    public  static final int kSE_LiveFailed = 6;
+
 
     public static String getErrorDes(int errornum)
     {
@@ -80,6 +82,8 @@ public class VideoStreamConstants {
                 return "failed to open video encoder";
             case kSE_UnknowError:
                 return "unkonw error";
+            case kSE_LiveFailed:
+                return "living stop with error";
         }
         return "no error";
     }

@@ -2,6 +2,7 @@
 #include "android/jnihelper/jni_helpers.h"
 #include "../src/H264AacUtils.h"
 #include"libyuv.h"
+#include"base/timeutils.h"
 
 
 std::string CVideoEncoderMediaCodec::s_strMediaCodecClassName = "cn/cxw/svideostreamlib/MediaCodecVideoEncoder";
@@ -130,13 +131,15 @@ bool CVideoEncoderMediaCodec::OnEncodeThread()
 		//dequene output buffers
 		while (true)
 		{
+			int64_t earilerTime = rtc::TimeMillis();
 			jobject outputbuffer = jnienv->CallObjectMethod(m_jMediaCodec, m_jdequeue_output_buffer_method_);
 			if (IsNull(jnienv, outputbuffer))
 			{
 				LOGW << " outputbuffer is null";
-				usleep(20000);
+				usleep(10000);
 				break;
 			}
+			UpdateEncodeTime(rtc::TimeSince(earilerTime));
 			bool key_frame = jnienv->GetBooleanField(outputbuffer, m_jinfo_iskeyframe);
 			int outbufferindex = jnienv->GetIntField(outputbuffer, m_jinfo_index);
 			long pts = jnienv->GetLongField(outputbuffer, m_jinfo_pts);
@@ -197,13 +200,13 @@ void CVideoEncoderMediaCodec::ConfigSetting(JNIEnv* jnienv)
 	std::string value;
 	if (m_H264Configs.GetConfigFromKey(kProfile, value))
 	{
-		jstring j_new_str = jnienv->NewString((jchar*)value.c_str(), value.length());
+		jstring j_new_str = jnienv->NewStringUTF(value.c_str());
 		jnienv->SetObjectField(m_jMediaCodec, jprofile, j_new_str);
 		
 	}
 	if (m_H264Configs.GetConfigFromKey(kRcMethod, value))
 	{
-		jstring j_new_str = jnienv->NewString((jchar*)value.c_str(), value.length());
+		jstring j_new_str = jnienv->NewStringUTF(value.c_str());
 		jnienv->SetObjectField(m_jMediaCodec, jrc_method, j_new_str);
 	}
 }
@@ -285,5 +288,13 @@ sH264CodecInfo CVideoEncoderMediaCodec::GetCodecInfo()
 	info.m_nLevel = 21;
 	m_H264Configs.GetConfigFromKey(kProfile, value);
 	info.m_nProfile = StringToProfile(value);
+	return info;
+}
+
+CVideoEncoderBase::EncoderRunTimeInfo CVideoEncoderMediaCodec::GetRunTimeInfo()
+{
+	CVideoEncoderBase::EncoderRunTimeInfo info;
+	info.m_nBufferRemainNum = m_qVideoFrameQ.Size();
+	info.m_nEncodeAvgTimeMs = m_nAvgEncodedTimeMs;
 	return info;
 }

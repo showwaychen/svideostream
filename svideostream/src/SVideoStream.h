@@ -10,7 +10,8 @@
 #include "Common.h"
 #include "H264AacUtils.h"
 #include "StatsCollector.h"
-
+#include"base/thread.h"
+#include"base/asyncinvoker.h"
 class sInputVideoInfo
 {
 
@@ -22,6 +23,11 @@ class sInputAudioInfo
 };
 class CSVideoStream : public CVideoEncoderBase::IEncodedCallBack, CAudioEncoderBase::IEncodedCallBack, CRtmpLive::ILiveEventObserver
 {
+	friend CStatsCollector;
+
+#include "base/location.h"
+
+#define SVS_FROM_HERE    rtc::Location(__FUNCTION__ , __FILE__ ":" STRINGIZE(__LINE__))
 public:
 	
 	class IStreamEventObserver
@@ -76,7 +82,20 @@ private:
 
 	IStreamEventObserver *m_pStreamEventObserver = nullptr;
 
+	//Statistics
 	CStatsCollector m_cStatsCollector;
+	//
+	int m_nAvg_fps = 0;
+	int64_t m_nLastFrameTimeMs = 0;
+	const int sCaluateTimeMs = 500;
+	void UpdateAvgFps(int64_t npts);
+	int m_nAvgPreProcessTimeMs = 0;
+	void UpdateAvgPreProcessTime(int64_t tms);
+
+#define ASYNNOTIFY(event, errorid) mAsyncInvoker.AsyncInvoke<void>(SVS_FROM_HERE, &m_tWorkThread, rtc::Bind(&CSVideoStream::StreamEventNotify, this, event, errorid));
+	rtc::Thread m_tWorkThread;
+	rtc::AsyncInvoker mAsyncInvoker;
+	
 	void StreamEventNotify(StreamEvent event, StreamError error)
 	{
 		if (m_pStreamEventObserver != nullptr)
@@ -84,7 +103,7 @@ private:
 			m_pStreamEventObserver->OnStreamEvent(event, error);
 		}
 	}
-	void InitParams();
+	void ResetMembers();
 	void ImagePreProcess();
 
 	int ConvertToI420(const uint8_t *src_y, uint8_t *dst_y, int dst_stride_y,

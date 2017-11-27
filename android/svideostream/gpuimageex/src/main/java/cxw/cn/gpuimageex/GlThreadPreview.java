@@ -19,6 +19,7 @@ public class GlThreadPreview extends GlRenderThread implements IPreviewView.IPre
     {
         mPreviewView = pview;
         mPreviewView.addRenderCallback(this);
+        mThreadName = "GlThreadPreview";
     }
 
     @Override
@@ -39,8 +40,10 @@ public class GlThreadPreview extends GlRenderThread implements IPreviewView.IPre
 
     @Override
     public void onSurfaceDestroyed(@NonNull IPreviewView.ISurfaceHolder holder) {
-        stopRender();
+        super.stopRender();
+        mNeedStartWhenCreate = false;
         mWidth = mHeight = -1;
+        mSurface = null;
     }
 
     @Override
@@ -52,10 +55,18 @@ public class GlThreadPreview extends GlRenderThread implements IPreviewView.IPre
             return ;
         }
         mNeedStartWhenCreate = false;
+        Log.e(mThreadName, "thread start  check state is " + getState().name());
         super.start();
         if (mWidth >= 0 && mHeight >= 0)
         {
             requestResize(mWidth, mHeight);
         }
+    }
+
+    @Override
+    public void stopRender() {
+        mPreviewView.removeRenderCallback(this);
+        mPreviewView = null;
+        super.stopRender();
     }
 }
