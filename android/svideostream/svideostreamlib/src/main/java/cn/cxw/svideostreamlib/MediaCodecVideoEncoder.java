@@ -270,6 +270,26 @@ public class MediaCodecVideoEncoder {
         {
             return MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline;
         }
+        else  if (profile.compareTo(VideoStreamConstants.VALUE_MAIN) == 0)
+        {
+            return MediaCodecInfo.CodecProfileLevel.AVCProfileMain;
+        }
+        else if (profile.compareTo(VideoStreamConstants.VALUE_HIGH) == 0)
+        {
+            return MediaCodecInfo.CodecProfileLevel.AVCProfileHigh;
+        }
+        else if (profile.compareTo(VideoStreamConstants.VALUE_HIGH10) == 0)
+        {
+            return MediaCodecInfo.CodecProfileLevel.AVCProfileHigh10;
+        }
+        else if (profile.compareTo(VideoStreamConstants.VALUE_HIGH422) == 0)
+        {
+            return MediaCodecInfo.CodecProfileLevel.AVCProfileHigh422;
+        }
+        else if (profile.compareTo(VideoStreamConstants.VALUE_HIGH444) == 0)
+        {
+            return MediaCodecInfo.CodecProfileLevel.AVCProfileHigh444;
+        }
         return MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline;
     }
     int stringTorcmethod()

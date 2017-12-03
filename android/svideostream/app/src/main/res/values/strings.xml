@@ -6,7 +6,7 @@
     <string name="start_capture_live">start capture for live</string>
     <string name="stop_record">stop record</string>
     <string name="start_live">start live</string>
-    <string name="stop_live">stop record</string>
+    <string name="stop_live">stop live</string>
 
     <string name="filter">filter</string>
 </resources>

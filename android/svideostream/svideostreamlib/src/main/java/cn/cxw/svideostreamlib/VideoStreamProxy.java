@@ -14,7 +14,6 @@ public class VideoStreamProxy implements VideoFrameSource.OnVideoFrameComing {
     SVideoStream mSVideoStream = null;
     VideoStreamSetting mSetting = new VideoStreamSetting();
 
-    boolean mIsStarted = false;
     //stream
     int mStreamWidth = 0;
     int mStreamHeight = 0;
@@ -67,6 +66,11 @@ public class VideoStreamProxy implements VideoFrameSource.OnVideoFrameComing {
     {
         return mSVideoStream.getStreamDuration();
     }
+
+    public boolean isInStreaming()
+    {
+        return mSVideoStream.isInStreaming();
+    }
     private void streamConfig()
     {
         if (mStreamHeight == 0 || mStreamHeight == 0)
@@ -110,17 +114,10 @@ public class VideoStreamProxy implements VideoFrameSource.OnVideoFrameComing {
             Log.d(TAG, "mVideoFrameSource hasn't started");
             return -1;
         }
-        if (mIsStarted)
-        {
-            return 0;
-        }
+
         streamConfig();
         int ret = 0;
         ret = mSVideoStream.StartStream();
-        if (ret == 0)
-        {
-            mIsStarted = true;
-        }
         return ret;
     }
 
@@ -136,7 +133,6 @@ public class VideoStreamProxy implements VideoFrameSource.OnVideoFrameComing {
     {
         mStreamHeight = mStreamWidth = 0;
         int ret = mSVideoStream.StopStream();
-        mIsStarted = false;
         return ret;
     }
 
@@ -147,7 +143,7 @@ public class VideoStreamProxy implements VideoFrameSource.OnVideoFrameComing {
     }
     @Override
     public void onVideoFrameComing(ByteBuffer framedata, int stride, int height) {
-        if (mIsStarted)
+        if (isInStreaming())
         {
             mSVideoStream.InpputVideoData(framedata);
         }

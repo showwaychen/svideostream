@@ -72,18 +72,39 @@
     <string name="pref_h264profile_title">H264 Profile</string>
     <string-array name="pref_entries_h264profile">
         <item>baseline</item>
+        <item>main</item>
+        <item>high</item>
+        <item>high10</item>
+        <item>high422</item>
+        <item>high444</item>
     </string-array>
 
     <string name="pref_key_x264preset">preset</string>
-    <string name="pref_x264preset_title">Preset</string>
+    <string name="pref_x264preset_title">Preset(only for x264)</string>
     <string-array name="pref_entries_x264preset">
+        <item>ultrafast</item>
         <item>superfast</item>
+        <item>veryfast</item>
+        <item>faster</item>
+        <item>fast</item>
+        <item>medium</item>
+        <item>slow</item>
+        <item>slower</item>
+        <item>veryslow</item>
+        <item>placebo</item>
     </string-array>
 
     <string name="pref_key_x264tune">tune</string>
-    <string name="pref_x264tune_title">Tune</string>
+    <string name="pref_x264tune_title">Tune(only for x264)</string>
     <string-array name="pref_entries_x264tune">
         <item>zerolatency</item>
+        <item>fastdecode</item>
+        <item>ssim</item>
+        <item>psnr</item>
+        <item>stillimage</item>
+        <item>grain</item>
+        <item>animation</item>
+        <item>film</item>
     </string-array>
 
     <string name="pref_key_rcmethod">rc_method</string>

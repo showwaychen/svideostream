@@ -111,9 +111,11 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
     public void setPreviewView(IPreviewView pview)
     {
         mPreviewView = pview;
-        mGlRenderThread = new GlThreadPreview(pview);
-        pview.addRenderCallback(this);
-
+        if (pview != null)
+        {
+            mGlRenderThread = new GlThreadPreview(pview);
+            pview.addRenderCallback(this);
+        }
     }
     public void setObserver(GPUImageExObserver observer)
     {

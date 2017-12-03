@@ -58,6 +58,8 @@ public class VideoStreamConstants {
     public  static final int SE_StreamWarning = 3;
     public  static final int SE_StreamFailed = 4;
     public  static final int SE_StreamStarted = 5;
+    public  static final int SE_StreamStopped = 6;
+
     //stream event error
     public  static final int kSE_NoneError = 0;
     public  static final int kSE_UnknowError = 1;
@@ -96,12 +98,33 @@ public class VideoStreamConstants {
     //h264 encoder config key
     public static final  String KEY_PROFILE = "profile";
            public static final String VALUE_BASELINE = "baseline";
+           public static final String VALUE_MAIN = "main";
+           public static final String VALUE_HIGH = "high";
+           public static final String VALUE_HIGH10 = "high10";
+           public static final String VALUE_HIGH422 = "high422";
+           public static final String VALUE_HIGH444 = "high444";
 
     public static final  String KEY_PRESET = "preset";
+        public static final String VALUE_ultrafast = "ultrafast";
         public static final String VALUE_superfast = "superfast";
+        public static final String VALUE_veryfast = "veryfast";
+        public static final String VALUE_faster = "faster";
+        public static final String VALUE_fast = "fast";
+        public static final String VALUE_medium = "medium";
+        public static final String VALUE_slow = "slow";
+        public static final String VALUE_slower = "slower";
+        public static final String VALUE_veryslow = "veryslow";
+        public static final String VALUE_placebo = "placebo";
 
     public static final String KEY_TUNE = "tune";
          public static final String VALUE_zerolatency = "zerolatency";
+        public static final String VALUE_fastdecode = "fastdecode";
+        public static final String VALUE_ssim = "ssim";
+        public static final String VALUE_psnr = "psnr";
+        public static final String VALUE_stillimage = "stillimage";
+        public static final String VALUE_grain = "grain";
+        public static final String VALUE_animation = "animation";
+        public static final String VALUE_film = "film";
 
     public static final String KEY_RC_METHOD = "rc_method";
         public  static final String VALUE_rc_abr = "RC_ABR";

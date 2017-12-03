@@ -22,7 +22,6 @@ import cn.cxw.svideostream.application.GlobalVideoStream;
 import cn.cxw.svideostream.application.MainApplication;
 import cn.cxw.svideostream.widget.InfoHudViewHolder;
 import cn.cxw.svideostream.widget.SurfaceViewPreview;
-import cn.cxw.svideostreamlib.CommonSetting;
 import cn.cxw.svideostreamlib.GPUImageExFrameSource;
 import cn.cxw.svideostreamlib.SVideoStream;
 import cn.cxw.svideostreamlib.VideoFrameSource;
@@ -110,7 +109,7 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
                 }
             };
         };
-        CommonSetting.nativeSetLogLevel(VideoStreamConstants.LS_INFO);
+//        CommonSetting.nativeSetLogLevel(VideoStreamConstants.LS_INFO);
         mGPUVideoSource = new GPUImageExFrameSource();
         mGPUVideoSource.setObserver(this);
         mVideoStream.setVideoFrameSource(mGPUVideoSource);
@@ -158,6 +157,10 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
         releaseWakeLock();
         super.onDestroy();
         mVideoStream.stopStream();
+        mVideoStream.setStreamEventObserver(null);
+        mGPUVideoSource.setObserver(null);
+//        mGPUVideoSource.stopPreview();
+        mGPUVideoSource.setPreviewView(null);
     }
     // 获取电源锁
     protected void acquireWakeLock() {
@@ -183,6 +186,7 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
         }
     }
 
+    boolean mbLive = false;
     @Override
     public void onClick(View view) {
         int vid = view.getId();
@@ -200,49 +204,78 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
                 });
             break;
             case R.id.cb_record:
+                mbLive = false;
                 if (m_cbRecord.isChecked())
                 {
+                    m_cbRecord.setChecked(false);
                     if (0 != StartStream(false))
                     {
-                        m_cbCameraSwitch.setChecked(false);
+                        m_cbCameraSwitch.setChecked(true);
                         m_cbRecord.setText(R.string.start_record);
 
                         return ;
                     }
-                    m_cbRecord.setText(R.string.stop_record);
-                    mcbLive.setEnabled(false);
+//                    m_cbRecord.setText(R.string.stop_record);
+//                    mcbLive.setEnabled(false);
+                    m_cbRecord.setEnabled(false);
                 }
                 else
                 {
+                    m_cbRecord.setChecked(true);
+                    m_cbRecord.setEnabled(false);
                     StopStream();
-                    m_cbRecord.setText(R.string.start_record);
-                    mcbLive.setEnabled(true);
+//                    m_cbRecord.setText(R.string.start_record);
+//                    mcbLive.setEnabled(true);
 
                 }
                 break;
             case R.id.cb_live:
+                mbLive = true;
                 if (mcbLive.isChecked())
                 {
+                    mcbLive.setChecked(false);
+
                     if (0 != StartStream(true))
                     {
-                        mcbLive.setChecked(false);
+                        mcbLive.setChecked(true);
                         mcbLive.setText(R.string.start_live);
                         return ;
                     }
-                    m_cbRecord.setEnabled(false);
-                    mcbLive.setText(R.string.stop_live);
+                    mcbLive.setEnabled(false);
+//                    m_cbRecord.setEnabled(false);
+//                    mcbLive.setText(R.string.stop_live);
                 }
                 else
                 {
+                    mcbLive.setChecked(true);
+                    mcbLive.setEnabled(false);
                     StopStream();
-                    mcbLive.setText(R.string.start_live);
-                    m_cbRecord.setEnabled(true);
+//                    mcbLive.setText(R.string.start_live);
+//                    m_cbRecord.setEnabled(true);
                 }
                 break;
         }
 
     }
 
+    void refreshUi()
+    {
+        boolean streaming = mVideoStream.isInStreaming();
+        if (mbLive)
+        {
+            mcbLive.setChecked(streaming);
+            mcbLive.setText(streaming?R.string.stop_live:R.string.start_live);
+            mcbLive.setEnabled(true);
+            m_cbRecord.setEnabled(!streaming);
+        }else
+        {
+            m_cbRecord.setChecked(streaming);
+            m_cbRecord.setText(streaming?R.string.stop_record:R.string.start_record);
+            m_cbRecord.setEnabled(true);
+            mcbLive.setEnabled(!streaming);
+
+        }
+    }
     @Override
     public void onEvent(final int eventid, final  int error) {
         if (eventid == VideoStreamConstants.SE_StreamStarted)
@@ -256,14 +289,19 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
                 switch (eventid)
                 {
                     case VideoStreamConstants.SE_StreamStarted:
-
+                        refreshUi();
                         Toast.makeText(GPUImageExCameraActivity.this, "stream started", Toast.LENGTH_LONG).show();
                         break;
                     case VideoStreamConstants.SE_LiveConnected:
                         Toast.makeText(GPUImageExCameraActivity.this, "live connected ok", Toast.LENGTH_LONG).show();
                         break;
                     case VideoStreamConstants.SE_StreamFailed:
+                        refreshUi();
                         Toast.makeText(getApplicationContext(), VideoStreamConstants.getErrorDes(error), Toast.LENGTH_LONG).show();
+                        break;
+                    case VideoStreamConstants.SE_StreamStopped:
+                        refreshUi();
+                        Toast.makeText(GPUImageExCameraActivity.this, "stream stopped", Toast.LENGTH_LONG).show();
                         break;
                 }
             }

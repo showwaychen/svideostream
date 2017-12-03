@@ -33,6 +33,10 @@ public class MainActivity extends AppCompatActivity {
 
 //                    startActivity(v.getId());
                 }
+                else
+                {
+                    Toast.makeText(MainActivity.this, "no camera permission", Toast.LENGTH_SHORT).show();
+                }
 //                CameraActivity.Show(MainActivity.this);
 //                                SettingActivity.showActivity(MainActivity.this);
 

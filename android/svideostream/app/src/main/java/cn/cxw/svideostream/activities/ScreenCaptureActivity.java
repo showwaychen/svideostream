@@ -61,7 +61,7 @@ public class ScreenCaptureActivity extends AppCompatActivity implements View.OnC
     }
     void initView()
     {
-        CommonSetting.nativeSetLogLevel(VideoStreamConstants.LS_WARNING);
+//        CommonSetting.nativeSetLogLevel(VideoStreamConstants.LS_WARNING);
         mScreenVideoFrameSource = new ScreenVideoFrameSource();
         mScreenVideoFrameSource.setObserver(this);
         mVideoStream.setVideoFrameSource(mScreenVideoFrameSource);
