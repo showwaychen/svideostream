@@ -3,6 +3,7 @@
 #include"libyuv.h"
 #include"base/timeutils.h"
 #include"base/nullsocketserver.h"
+#include "CommonSetting.h"
 //#define SAVE_YUV_FILE
 #ifdef SAVE_YUV_FILE
 static FILE *pyuvFile = NULL;
@@ -18,17 +19,17 @@ static FILE *paacFile = NULL;
 
 //#define NOTIFY_MESSAGELOOPER(event, errorid) CMainMessageLooper::getInst()->InvokeAsyn<void>(SVS_FROM_HERE, rtc::Bind(&CSVideoStream::StreamEventNotify, this, event, errorid));
 //#define NOTIFY_MESSAGELOOPER(event, errorid) CMainMessageLooper::getInst()->InvokeAsyn<void>(SVS_FROM_HERE, rtc::Bind(&CSVideoStream::StreamEventNotify, this, event, errorid));
-CSVideoStream::CSVideoStream() :m_cStatsCollector(this),
+CSVideoStream::CSVideoStream() :m_pRtmpPublish(new CRtmpLive),
+m_pFFmpegMux(new CFFmpegMux),
+m_cStatsCollector(this),
 m_tWorkThread(new rtc::NullSocketServer())
 {
 	m_tWorkThread.SetName("CSVideoStream", nullptr);
 	m_tWorkThread.Start(nullptr);
-	m_pRtmpPublish = new CRtmpLive;
-	m_pFFmpegMux = new CFFmpegMux;
 
 }
 
-int CSVideoStream::StartStream()
+int CSVideoStream::StartStream(bool isasyn)
 {
 	if (m_eState == StreamState_STARTED || m_eState == StreamState_STARTING)
 	{
@@ -69,7 +70,13 @@ int CSVideoStream::StartStream()
 		LOGE << "audio encoder is null";
 		return -1;
 	}
+	if (isasyn)
+	{
+		mAsyncInvoker.AsyncInvoke<int>(SVS_FROM_HERE, &m_tWorkThread, rtc::Bind(&CSVideoStream::StartStream, this, false));
+		return 0;
+	}
 	m_eState = StreamState_STARTING;
+	
 	ResetMembers();
 	m_pVideoEncoder->SetEncodedCallBack(this);
 	m_pVideoEncoder->SetVideoParams(m_nVideoDstWidth, m_nVideoDstHeight, m_nVideoBitrate, m_nVideoFrameRate);
@@ -79,7 +86,6 @@ int CSVideoStream::StartStream()
 	{
 		ASYNNOTIFY(SE_StreamFailed, kSE_VideoEncoderOpenedFailed);
 		m_eState = StreamState_NONE;
-		//StreamEventNotify(SE_StreamFailed, kSE_VideoEncoderOpenedFailed);
 		LOGE << "video encoder open error";
 		return -1;
 	}
@@ -192,34 +198,59 @@ int CSVideoStream::StartStream()
 	return 0;
 }
 
-int CSVideoStream::StopStream()
+int CSVideoStream::StopStream(bool isasyn)
 {
 	LOGD << "StopStream";
-	if (m_eState != StreamState_STARTED && m_eState != StreamState_STARTING)
+	if (!(m_eState == StreamState_STARTED || m_eState == StreamState_STARTING))
 	{
 		LOGD << "stream hadn't started";
 		return 0;
 	}
+	if (m_eState == StreamState_STOPPING)
+	{
+		LOGD << "stream is stopping";
+		return 0;
+	}
+	if (isasyn)
+	{
+		//????
+		LOGD << "StopStream isasyn = true";
+		mAsyncInvoker.AsyncInvoke<int>(SVS_FROM_HERE, &m_tWorkThread, rtc::Bind(&CSVideoStream::StopStream, this, false));
+		return 0;
+	}
+	m_eState = StreamState_STOPPING;
+
 	if (m_pVideoEncoder != nullptr)
 	{
+		LOGD << "close video encoder start ";
 		m_pVideoEncoder->CloseEncoder();
+		LOGD << "close video encoder end";
 	}
 	if (m_pAudioEncoder != nullptr)
 	{
+		LOGD << "close audio encoder start";
 		m_pAudioEncoder->CloseEncoder();
+		LOGD << "close audio encoder end";
+
 	}
 	if (m_eStreamType == ST_RECORD)
 	{
 		if (m_pFFmpegMux != nullptr)
 		{
+			LOGD << "stop mux start ";
 			m_pFFmpegMux->StopMux();
+			LOGD << "stop mux end";
+
 		}
 	}
 	else if (m_eStreamType == ST_LIVE)
 	{
 		if (m_pRtmpPublish != nullptr)
 		{
+			LOGD<<"stop live start ";
 			m_pRtmpPublish->StopLive();
+			LOGD << "stop live end";
+
 		}
 	}
 #ifdef SAVE_YUV_FILE
@@ -241,6 +272,11 @@ int CSVideoStream::StopStream()
 	}
 #endif
 	m_eState = StreamState_STOPED;
+	m_pI420ImageTmp.reset(nullptr);
+	m_pScaleImageTmp.reset(nullptr);
+	LOGD << "notify stream stopped";
+	CCommonSetting::StopLeakMemDetect();
+	ASYNNOTIFY(SE_StreamStopped, kSE_NoneError);
 	return 0;
 }
 
@@ -261,11 +297,15 @@ int CSVideoStream::InputVideoData(uint8_t* data, int nszie, int64_t npts)
 	m_nCurPts = npts;
 	if (m_eSrcDataType == SDT_IMAGEDATA)
 	{
-		memcpy(m_pSrcImageData, data, nszie);
+		memcpy(m_pSrcImageData.get(), data, nszie);
 		int64_t earilertime = rtc::TimeMillis();
 		ImagePreProcess();
 		UpdateAvgPreProcessTime(rtc::TimeSince(earilertime));
-		return m_pVideoEncoder->PushData(m_pDstImageData, m_nDstImageDataSize, m_nCurPts);
+		int ret =  m_pVideoEncoder->PushData(m_pDstImageData.get(), m_nDstImageDataSize, m_nCurPts);
+		if (ret != 0)
+		{
+			LOGW << "video encoder buffer is full .failed to push data";
+		}
 	}
 	return 0;
 }
@@ -301,22 +341,6 @@ CSVideoStream::~CSVideoStream()
 {
 	StopStream();
 	m_tWorkThread.Stop();
-	if (m_pDstImageData != nullptr)
-	{
-		delete m_pDstImageData;
-	}
-	if (m_pSrcImageData != nullptr)
-	{
-		delete m_pSrcImageData;
-	}
-	if (m_pRtmpPublish != nullptr)
-	{
-		delete m_pRtmpPublish;
-	}
-	if (m_pFFmpegMux != nullptr)
-	{
-		delete m_pFFmpegMux;
-	}
 }
 
 void CSVideoStream::OnVideoEncodedData(uint8_t* data, int nsize, int64_t pts, int64_t dts)
@@ -359,6 +383,7 @@ void CSVideoStream::ResetMembers()
 	m_nAvg_fps = 0;
 	m_nLastFrameTimeMs = 0;
 	m_nAvgPreProcessTimeMs = 0;
+
 }
 
 void CSVideoStream::ImagePreProcess()
@@ -366,14 +391,14 @@ void CSVideoStream::ImagePreProcess()
 
 	int uoffset = m_nVideoSrcWidth * m_nVideoSrcHeight;
 	int voffset = uoffset * 5 / 4;
-	uint8_t*ProcessSrcData = m_pSrcImageData;
+	uint8_t*ProcessSrcData = m_pSrcImageData.get();
 	uint8_t*ProcessDstData = nullptr;
 	int yuvsize = m_nVideoSrcHeight* m_nVideoSrcWidth * 3 / 2;
 	if (m_pI420ImageTmp == nullptr)
 	{
-		m_pI420ImageTmp = new uint8_t[m_nVideoSrcHeight* m_nVideoSrcWidth * 3 / 2];
+		m_pI420ImageTmp.reset(new uint8_t[m_nVideoSrcHeight* m_nVideoSrcWidth * 3 / 2]);
 	}
-	ProcessDstData = m_pI420ImageTmp;
+	ProcessDstData = m_pI420ImageTmp.get();
 	ConvertToI420(ProcessSrcData, ProcessDstData, m_nVideoSrcWidth,
 		ProcessDstData + uoffset, m_nVideoSrcWidth / 2,
 		ProcessDstData + voffset, m_nVideoSrcWidth / 2,
@@ -400,32 +425,32 @@ void CSVideoStream::ImagePreProcess()
 			bScale = true;
 		}
 	}
-	uint8_t *ImageDataTmp = m_pI420ImageTmp;
+	uint8_t *ImageDataTmp = m_pI420ImageTmp.get();
 	if (bScale)
 	{
 		LOGI << "need scale";
 		if (m_pScaleImageTmp == nullptr)
 		{
-			m_pScaleImageTmp = new uint8_t[nScaleWidth* nScaleHeight * 3 / 2];
+			m_pScaleImageTmp.reset(new uint8_t[nScaleWidth* nScaleHeight * 3 / 2]);
 		}
 		int scaleuoffset = nScaleWidth * nScaleHeight;
 		int scalevoffset = scaleuoffset * 5 / 4;
-		libyuv::I420Scale(m_pI420ImageTmp, m_nVideoSrcWidth,
-			m_pI420ImageTmp + uoffset, m_nVideoSrcWidth / 2,
-			m_pI420ImageTmp + voffset, m_nVideoSrcWidth / 2,
+		libyuv::I420Scale(m_pI420ImageTmp.get(), m_nVideoSrcWidth,
+			m_pI420ImageTmp.get() + uoffset, m_nVideoSrcWidth / 2,
+			m_pI420ImageTmp.get() + voffset, m_nVideoSrcWidth / 2,
 			m_nVideoSrcWidth, m_nVideoSrcHeight,
-			m_pScaleImageTmp, nScaleWidth,
-			m_pScaleImageTmp + scaleuoffset, nScaleWidth / 2,
-			m_pScaleImageTmp + scalevoffset, nScaleWidth / 2,
+			m_pScaleImageTmp.get(), nScaleWidth,
+			m_pScaleImageTmp.get() + scaleuoffset, nScaleWidth / 2,
+			m_pScaleImageTmp.get() + scalevoffset, nScaleWidth / 2,
 			nScaleWidth, nScaleHeight,
 			libyuv::kFilterBox);
-		ImageDataTmp = m_pScaleImageTmp;
+		ImageDataTmp = m_pScaleImageTmp.get();
 	}
 
 	if (m_pDstImageData == nullptr)
 	{
 		m_nDstImageDataSize = m_nVideoDstWidth * m_nVideoDstHeight * 3 / 2;
-		m_pDstImageData = new uint8_t[m_nDstImageDataSize];
+		m_pDstImageData.reset(new uint8_t[m_nDstImageDataSize]);
 	}
 	if (m_eVideoRotation != kRotate0) {
 		//LOGI << "need rotation srcwidth = " << nScaleWidth<<" srcheight = "<<nScaleHeight<<" dstwidth = "<<m_nVideoDstWidth<<" dstheight = "<<m_nVideoDstHeight;
@@ -434,15 +459,15 @@ void CSVideoStream::ImagePreProcess()
 		libyuv::I420Rotate(ImageDataTmp, nScaleWidth,
 			ImageDataTmp + scaleuoffset, nScaleWidth / 2,
 			ImageDataTmp + scalevoffset, nScaleWidth / 2,
-			m_pDstImageData, m_nVideoDstWidth,
-			m_pDstImageData + scaleuoffset, m_nVideoDstWidth / 2,
-			m_pDstImageData + scalevoffset, m_nVideoDstWidth / 2,
+			m_pDstImageData.get(), m_nVideoDstWidth,
+			m_pDstImageData.get() + scaleuoffset, m_nVideoDstWidth / 2,
+			m_pDstImageData.get() + scalevoffset, m_nVideoDstWidth / 2,
 			nScaleWidth, nScaleHeight,
 			(libyuv::RotationMode)m_eVideoRotation);
 	}
 	else
 	{
-		memcpy(m_pDstImageData, ImageDataTmp, m_nDstImageDataSize);
+		memcpy(m_pDstImageData.get(), ImageDataTmp, m_nDstImageDataSize);
 	}
 #ifdef SAVE_YUV_FILE
 	if (NULL != pyuvFile) {
@@ -563,6 +588,7 @@ void CSVideoStream::UpdateAvgFps(int64_t npts)
 	int delta = npts - m_nLastFrameTimeMs;
 	if (delta >= sCaluateTimeMs)
 	{
+		fcount++;
 		m_nAvg_fps = (int)(fcount * 1000.0f / (float)delta);
 		fcount = 0;
 		m_nLastFrameTimeMs = npts;

@@ -42,7 +42,7 @@ void CFFmpegMux::AddVideoStream()
 
 	//h264
 
-	c->profile = FF_PROFILE_H264_BASELINE;
+	c->profile = m_H264Info.m_nProfile;
 	c->level = 21;
 	c->thread_type = FF_THREAD_FRAME;
 	c->keyint_min = m_H264Info.m_nFps + 1;
@@ -324,6 +324,7 @@ int CFFmpegMux::WriteVideoData(uint8_t* vdata, int nsize, int64_t npts, int64_t 
 		return -1;
 	}
 
+	LOGD << "ndts = "<< ndts<<" npts = "<<npts;
 	m_pktVideo.data = vdata;
 	m_pktVideo.size = nsize;
 	m_pktVideo.stream_index = m_pVideoStream->index;
@@ -332,7 +333,7 @@ int CFFmpegMux::WriteVideoData(uint8_t* vdata, int nsize, int64_t npts, int64_t 
 	m_pktVideo.dts = av_rescale_q(ndts, (AVRational){ 1, 1000 }, m_pVideoStream->time_base);
 	m_pktAudio.duration = m_pktVideo.pts - m_nLastVideoPts;
 	m_nLastVideoPts = m_pktVideo.pts;
-	LOGI << "video packet size = " << nsize << " dts = pts = " << m_pktVideo.pts<< "  inputvideo pts = "<<npts<<" index = "<<m_pktVideo.stream_index;
+	//LOGI << "video packet size = " << nsize << " dts = pts = " << m_pktVideo.pts<< "  inputvideo pts = "<<npts<<" index = "<<m_pktVideo.stream_index;
 	if (CH264AacUtils::IsKeyFrame(m_pktVideo.data, m_pktVideo.size, m_H264Info.m_bAnnexB)) {
 		m_pktVideo.flags |= AV_PKT_FLAG_KEY;
 		LOGI << "video packet is keyframe";

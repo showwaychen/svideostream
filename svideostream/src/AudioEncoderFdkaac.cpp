@@ -18,10 +18,10 @@ bool CAudioEncoderFdkaac::OnAudioEncoderThread()
 	AACENC_ERROR err;
 	int64_t pts = 0;
 	int input_size = m_nChannels * 2 * m_sInfo.frameLength;
-	int16_t* convert_buf = new int16_t[ input_size / 2 ];
+	std::unique_ptr<int16_t> convert_buf(new int16_t[ input_size / 2 ]);
 
 	//in param
-	in_ptr = (uint8_t*)convert_buf;
+	in_ptr = (uint8_t*)convert_buf.get();
 	in_size = input_size;
 	in_elem_size = 2;
 
@@ -51,15 +51,14 @@ bool CAudioEncoderFdkaac::OnAudioEncoderThread()
 	}
 	while (!m_bAbort)
 	{
-		AudioFrame * audiodata = nullptr;
-		if (!m_qFrameQ.PullData(&audiodata, true))
+		std::unique_ptr<AudioFrame> audiodata;
+		if (!m_qFrameQ.PullData(audiodata, true))
 		{
 			usleep(20000);
 			continue;
 		}
 		memcpy(in_ptr, audiodata->GetFrameData(), input_size);
 		pts = audiodata->GetPts();
-		delete audiodata;
 
 		if ((err = aacEncEncode(m_handle, &in_buf, &out_buf, &in_args, &out_args)) != AACENC_OK) {
 			LOGE<<"Encoding failed";
@@ -71,7 +70,6 @@ bool CAudioEncoderFdkaac::OnAudioEncoderThread()
 
 		}
 	}
-	delete convert_buf;
 	aacEncClose(&m_handle);
 	LOGI << "Out aacencodethread.";
 	return false;
@@ -175,11 +173,10 @@ int CAudioEncoderFdkaac::PushData(uint8_t *audiodata, int nsize, int64_t pts)
 	}
 	//LOGI << " audio data size = " << nsize << " pts = " << pts;
 
-	AudioFrame *frame = new AudioFrame(m_nSamplesize, m_nChannels, m_nFrameSampleSize);
+	std::unique_ptr<AudioFrame> frame(new AudioFrame(m_nSamplesize, m_nChannels, m_nFrameSampleSize));
 	frame->FillData(audiodata, nsize, pts);
 	if (!m_qFrameQ.PushData(frame, true))
 	{
-		delete frame;
 		return -1;
 	}
 	return 0;

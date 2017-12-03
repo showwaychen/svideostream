@@ -2,16 +2,10 @@
 #define SVIDEO_STREAM_JNIWRAP_H_
 #include "../src/SVideoStream.h"
 #include "android/jnihelper/jni_classloader.h"
-#define  SAFE_DELETE(instance) \
-if (instance != nullptr) {\
-delete instance; \
-instance = nullptr; }
 
-enum VideoEncoderType
-{
-	H264ENCODER_X264 = 0,
-	H264ENCODER_MEDIACODEC
-};
+#include <memory>
+#include "../src/VideoEncoderFactory.h"
+
 enum SettingKeyValue
 {
 	SKV_H264ENCODERCONFIG = 0
@@ -19,10 +13,11 @@ enum SettingKeyValue
 class CSVideoStream_JniWrap: public CSVideoStream::IStreamEventObserver
 {
 
-	CSVideoStream *m_pVideoStream = nullptr;
-	CVideoEncoderBase* m_pVideoEncoder = nullptr;
-	CAudioEncoderBase* m_pAudioEncoder = nullptr;
-	VideoEncoderType m_eVideoEncoderType = H264ENCODER_X264;
+	std::unique_ptr<CVideoEncoderBase> m_pVideoEncoder;
+	std::unique_ptr<CAudioEncoderBase> m_pAudioEncoder;
+
+	std::unique_ptr<CSVideoStream> m_pVideoStream;
+	CVideoEncoderFactory::VideoEncoderType m_eVideoEncoderType = CVideoEncoderFactory::H264ENCODER_X264;
 
 	jobject m_jThiz;
 	jmethodID m_jEventCallback;
@@ -57,9 +52,10 @@ public:
 	static void JNICALL native_Destroy(JNIEnv *env, jobject thiz);
 
 
+	void SetAndConfigVideoEncoder();
 	int StartStream();
 	int StopStream();
-	void SetVideoEncoderType(VideoEncoderType etype)
+	void SetVideoEncoderType(CVideoEncoderFactory::VideoEncoderType etype)
 	{
 		m_eVideoEncoderType = etype;
 	}

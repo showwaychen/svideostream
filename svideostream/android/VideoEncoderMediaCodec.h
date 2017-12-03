@@ -5,6 +5,7 @@
 #include<jni.h>
 #include "../src/PlatformThreadEx.h"
 #include "../src/BufferQuene.h"
+#include <memory>
 // CVideoEncoderMediaCodec is a CVideoEncoderBase implementation that uses
 // Android's MediaCodec SDK API
 class CVideoEncoderMediaCodec :public CVideoEncoderBase
@@ -32,7 +33,7 @@ class CVideoEncoderMediaCodec :public CVideoEncoderBase
 	ImageFormat m_eEncoderSupportColorFormate = IMAGE_FORMAT_I420;
 	bool m_bAbort = false;
 	CPlatformThreadEx<CVideoEncoderMediaCodec> m_hEncodeThread;
-	CBufferQuene<VideoFrame*, &VideoFrame::FreeFun> m_qVideoFrameQ;
+	CBufferQueneEx<VideoFrame> m_qVideoFrameQ;
 	bool OnEncodeThread();
 	//output_buffer_info
 	//jclass  m_jOutputBufferInfoClass;

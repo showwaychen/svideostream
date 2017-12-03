@@ -11,7 +11,7 @@ extern "C"
 #define RTMP_STREAMCHANNEL_VIDEO        (0x04)
 #define RTMP_STREAMCHANNEL_AUDIO        (0x05)
 #define RTMP_CONNECT_TIMEOUT              (10)
-#define RTMP_CHUNK_SIZE                (1024)
+#define RTMP_CHUNK_SIZE                (1300)
 #define RTMP_VIDEO_SPECDATA_SIZE      (512)
 #define RTMP_AUDIO_SPECDATA_SIZE      (2)
 

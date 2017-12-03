@@ -12,6 +12,7 @@
 #include "StatsCollector.h"
 #include"base/thread.h"
 #include"base/asyncinvoker.h"
+#include <memory>
 class sInputVideoInfo
 {
 
@@ -58,11 +59,11 @@ private:
 	int m_nVideoFrameRate;
 	int m_nVideoBitrate;
 	int m_nVideoKeyFrameInterval = 3;
-	uint8_t* m_pSrcImageData = nullptr;
+	std::unique_ptr<uint8_t> m_pSrcImageData;
 	int m_nSrcImageDataSize = 0;
-	uint8_t* m_pI420ImageTmp = nullptr;
-	uint8_t* m_pScaleImageTmp = nullptr;
-	uint8_t* m_pDstImageData = nullptr;
+	std::unique_ptr<uint8_t> m_pI420ImageTmp;
+	std::unique_ptr<uint8_t> m_pScaleImageTmp;
+	std::unique_ptr<uint8_t> m_pDstImageData;
 	int m_nDstImageDataSize = 0;
 	int64_t m_nCurPts = 0;
 	//watermark
@@ -75,10 +76,10 @@ private:
 	CAudioEncoderBase* m_pAudioEncoder = nullptr;
 
 	std::string m_strPublishUrl;
-	CRtmpLive* m_pRtmpPublish = nullptr;
+	std::unique_ptr<CRtmpLive> m_pRtmpPublish ;
 	bool m_bIsLiveConnected = false;
 	std::string m_strFileName;
-	CFFmpegMux* m_pFFmpegMux = nullptr;
+	std::unique_ptr<CFFmpegMux> m_pFFmpegMux ;
 
 	IStreamEventObserver *m_pStreamEventObserver = nullptr;
 
@@ -139,12 +140,8 @@ public:
 		m_nVideoSrcStride = stride;
 		m_nVideoSrcWidth = width;
 		m_nVideoSrcHeight = height;
-		if (m_pSrcImageData != nullptr)
-		{
-			delete m_pSrcImageData;
-			m_pSrcImageData = nullptr;
-		}
-		m_pSrcImageData = new uint8_t[CH264AacUtils::GetFrameSize(format, stride, height)];
+
+		m_pSrcImageData.reset(new uint8_t[CH264AacUtils::GetFrameSize(format, stride, height)]);
 	}
 	void SetDstSize(int nwidth, int nheight)
 	{
@@ -165,8 +162,8 @@ public:
 	{
 		m_strFileName = filename;
 	}
-	int StartStream();
-	int StopStream();
+	int StartStream(bool isasyn = false);
+	int StopStream(bool isasyn = false);
 	int InputVideoData(uint8_t* data, int nszie, int64_t npts);
 	int InputAudioData(uint8_t* data, int nszie, int64_t npts);
 	int SetWaterMarkData(uint8_t *data, int stride, int width, int height, int format);

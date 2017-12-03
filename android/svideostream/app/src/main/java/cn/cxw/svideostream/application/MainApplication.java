@@ -2,6 +2,7 @@ package cn.cxw.svideostream.application;
 
 import android.app.Application;
 
+import com.squareup.leakcanary.LeakCanary;
 import com.squareup.leakcanary.RefWatcher;
 
 /**
@@ -16,12 +17,12 @@ public class MainApplication extends Application {
         super.onCreate();
         instance = this;
         mSetting = new Setting(this);
-//                if (LeakCanary.isInAnalyzerProcess(this)) {
-//            // This process is dedicated to LeakCanary for heap analysis.
-//            // You should not init your app in this process.
-//            return;
-//        }
-//        mRefWatcher = LeakCanary.install(this);
+                if (LeakCanary.isInAnalyzerProcess(this)) {
+            // This process is dedicated to LeakCanary for heap analysis.
+            // You should not init your app in this process.
+            return;
+        }
+        mRefWatcher = LeakCanary.install(this);
     }
     public static MainApplication getInstance() {
         return instance;

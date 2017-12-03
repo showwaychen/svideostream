@@ -4,6 +4,7 @@
 #include "Common.h"
 #include "Log.h"
 #include "MediaConfig.h"
+#include <memory>
 
 //source format only supports i420
 class CVideoEncoderBase
@@ -11,22 +12,18 @@ class CVideoEncoderBase
 public:
 	class VideoFrame
 	{
-		uint8_t *m_pData = nullptr;
+		std::unique_ptr<uint8_t> m_pData;
 		int m_nWidth = 0;
 		int m_nHeight = 0;
 		uint64_t m_nPts;
 	public:
-		static void FreeFun(void* data)
-		{
-			VideoFrame *ins = (VideoFrame*)data;
-			delete ins;
-		}
+
 		VideoFrame(int nwidth, int nheight)
 		{
 			m_nWidth = nwidth;
 			m_nHeight = nheight;
 			int nsize = m_nWidth * m_nHeight * 3 / 2;
-			m_pData = new uint8_t[nsize];
+			m_pData.reset(new uint8_t[nsize]);
 		}
 		int64_t GetPts()
 		{
@@ -34,20 +31,14 @@ public:
 		}
 		uint8_t* GetFrameData()
 		{
-			return m_pData;
+			return m_pData.get();
 		}
 		void FillData(uint8_t* data, int nsize, int64_t pts)
 		{
 			m_nPts = pts;
-			memcpy(m_pData, data, nsize);
+			memcpy(m_pData.get(), data, nsize);
 		}
-		~VideoFrame()
-		{
-			if (m_pData != nullptr)
-			{
-				delete m_pData;
-			}
-		}
+
 	};
 	class IEncodedCallBack
 	{
@@ -71,6 +62,7 @@ protected:
 
 	CMediaConfig m_H264Configs;
 	IEncodedCallBack* m_pCallBack = nullptr;
+	const int kMaxBufferSize = 10;
 
 	static int StringToProfile(const std::string& profile);
 public:

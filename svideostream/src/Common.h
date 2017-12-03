@@ -70,7 +70,8 @@ enum StreamEvent
 	SE_RecordStartedSuccess,
 	SE_StreamWarning,
 	SE_StreamFailed,
-	SE_StreamStarted
+	SE_StreamStarted,
+	SE_StreamStopped
 };
 enum ImageFormat
 {

@@ -1,5 +1,6 @@
 #include "RtmpLive.h"
 #include "H264AacUtils.h"
+#include <memory>
 int CRtmpLive::OnAVSpecdata(uint8_t* data, int nsize, RtmpPacket::PacketType type)
 {
 	if (type == RtmpPacket::RP_AUDIO)
@@ -327,7 +328,7 @@ int CRtmpLive::SendAVPacket(RtmpPacket* avpacket)
 		/*AF 01 + AAC RAW data*/
 		packet.m_body[i++] = 0xAF;
 		packet.m_body[i++] = 0x01;
-		memcpy(&packet.m_body[i], avpacket->m_pData, avpacket->m_nSize* sizeof(uint8_t));
+		memcpy(&packet.m_body[i], avpacket->GetData(), avpacket->m_nSize* sizeof(uint8_t));
 		i += avpacket->m_nSize;
 
 		packet.m_packetType = RTMP_PACKET_TYPE_AUDIO;
@@ -341,7 +342,7 @@ int CRtmpLive::SendAVPacket(RtmpPacket* avpacket)
 	else if (avpacket->m_eType == RtmpPacket::RP_VIDEO)
 	{
 		int i = 0;
-		uint8_t* pdata = avpacket->m_pData;
+		uint8_t* pdata = avpacket->GetData();
 		int nlen = avpacket->m_nSize;
 		// key frame
 		if (avpacket->m_bKeyFrame) {
@@ -394,7 +395,7 @@ int CRtmpLive::SendRtmpData(RTMPPacket *pkt)
 {
 	if (!RTMP_IsConnected(m_pRtmp)) {
 		LOGE<<"RTMP is not connect before send packet.";
-		return -1;
+		return 1;
 	}
 
 	uint32_t nStartTime = RTMP_GetTime(), nEndTime = 0;
@@ -451,8 +452,8 @@ bool CRtmpLive::OnSendThread()
 	{
 		sleeptime = 1000;
 		//get and send video packet.
-		RtmpPacket *avpacket = nullptr;
-		if (m_qVideo.PullData(&avpacket))
+		std::unique_ptr<RtmpPacket> avpacket;
+		if (m_qVideo.PullData(avpacket))
 		{
 			LOGI << "send video rtmp packet datasize = " << avpacket->m_nSize << " is keyframe = " << avpacket->m_bKeyFrame;
 			if (m_bNeedWaitKeyFrame && avpacket->m_bKeyFrame)
@@ -464,15 +465,19 @@ bool CRtmpLive::OnSendThread()
 				if (avpacket->m_bKeyFrame)
 				{
 					m_bNeedWaitKeyFrame = false;
-					SendAVPacket(avpacket);
+					if (0 != SendAVPacket(avpacket.get()))
+					{
+						break;
+					}
 				}
 			}
 			else
 			{
-				SendAVPacket(avpacket);
+				if (0 != SendAVPacket(avpacket.get()))
+				{
+					break;
+				}
 			}
-			delete avpacket;
-			avpacket = nullptr;
 		}
 		else
 		{
@@ -480,11 +485,12 @@ bool CRtmpLive::OnSendThread()
 		}
 		if (m_bAudioEnable)
 		{
-			if (m_qAudio.PullData(&avpacket))
+			if (m_qAudio.PullData(avpacket))
 			{
-				SendAVPacket(avpacket);
-				delete avpacket;
-				avpacket = nullptr;
+				if (0 != SendAVPacket(avpacket.get()))
+				{
+					break;
+				}
 			}
 			else
 			{
@@ -644,8 +650,10 @@ int CRtmpLive::SendVideoData(uint8_t* vdata, int nsize, int64_t npts)
 	{
 		return OnAVSpecdata(vdata, nsize, RtmpPacket::RP_VIDEO);
 	}
-	RtmpPacket *vpacket = new RtmpPacket(RtmpPacket::RP_VIDEO, npts, nsize, CH264AacUtils::IsKeyFrame(vdata, nsize, m_H264Info.m_bAnnexB));
+	std::unique_ptr<RtmpPacket> vpacket(new RtmpPacket(RtmpPacket::RP_VIDEO, npts, nsize, CH264AacUtils::IsKeyFrame(vdata, nsize, m_H264Info.m_bAnnexB)));
 	vpacket->FillData(vdata, nsize);
+	LOGD << "CRtmpLive::SendVideoData pts = " << npts;
+
 	if (!m_qVideo.PushData(vpacket))
 	{
 		LOGE << " video quene full vpacket discared";
@@ -672,8 +680,9 @@ int CRtmpLive::SendAudioData(uint8_t* adata, int nsize, int64_t npts)
 	{
 		return OnAVSpecdata(adata, nsize, RtmpPacket::RP_AUDIO);
 	}
-	RtmpPacket *apacket = new RtmpPacket(RtmpPacket::RP_AUDIO, npts, nsize,false);
+	std::unique_ptr<RtmpPacket> apacket(new RtmpPacket(RtmpPacket::RP_AUDIO, npts, nsize,false));
 	apacket->FillData(adata, nsize);
+	//LOGD << "CRtmpLive::SendAudioData pts = "<< npts;
 	if (!m_qAudio.PushData(apacket))
 	{
 		LOGE << " audio quene is full,  will be remove all";

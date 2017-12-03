@@ -2,6 +2,7 @@
 #define AUDIO_ENCODER_BASE_H_
 #include <stdint.h>
 #include "Common.h"
+#include <memory>
 
 class CAudioEncoderBase
 {
@@ -11,26 +12,22 @@ public:
 		int m_nSamplesize;
 		int m_nChannels;
 		int n_nFrameSize;
-		int8_t* m_pFrameData;
+		std::unique_ptr<int8_t> m_pFrameData;
 		int64_t m_nPts;
 	public:
-		static void FreeFun(void* data)
-		{
-			AudioFrame *ins = (AudioFrame*)data;
-			delete ins;
-		}
+
 		AudioFrame(int samplesize, int channels, int framesize)
 		{
 			m_nSamplesize = samplesize;
 			m_nChannels = channels;
 			n_nFrameSize = framesize;
 			int nsize = n_nFrameSize * m_nSamplesize * m_nChannels;
-			m_pFrameData = new int8_t[nsize];
+			m_pFrameData.reset(new int8_t[nsize]);
 		}
 		void FillData(uint8_t* data, int nsize, int64_t pts)
 		{
 			m_nPts = pts;
-			memcpy(m_pFrameData, data, nsize);
+			memcpy(m_pFrameData.get(), data, nsize);
 		}
 		int64_t GetPts()
 		{
@@ -38,7 +35,7 @@ public:
 		}
 		int8_t* GetFrameData()
 		{
-			return m_pFrameData;
+			return m_pFrameData.get();
 		}
 
 	};

@@ -7,6 +7,8 @@ class CCommonSetting
 {
 public:
 	static void SetLogLevel(int level);
+	static void StartLeakMemDetect();
+	static void StopLeakMemDetect();
 };
 
 #endif

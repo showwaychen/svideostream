@@ -18,6 +18,8 @@ else()
 endif()
 set(CMAKE_C_FLAGS "-D__STDC_CONSTANT_MACROS")
 ADD_DEFINITIONS( -DWEBRTC_ANDROID -DWEBRTC_POSIX)
+ADD_DEFINITIONS( -DSVS_ANDROID)
+#ADD_DEFINITIONS( -DLEAKTRACER)
 ###includes			
 set(ALL_LIB_PATH  ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparts/build/${ANDROID_ABI})	
 #baselib
@@ -34,7 +36,9 @@ set(FDKAAC_INCLUDEDIR ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparts/build/${ANDROID_
 set(LIBYUV_INCLUDEDIR ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparts/libyuv/jni/include)
 #libyuv
 set(LIBRTMP_INCLUDEDIR ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparts/librtmp/jni)
-include_directories("${FFMPEG_INCLUDEDIR}" "${BASELIB_INCLUDEDIR}" "${BASELIBROOT_INCLUDEDIR}" "${X264_INCLUDEDIR}" "${FDKAAC_INCLUDEDIR}" "${LIBYUV_INCLUDEDIR}" "${LIBRTMP_INCLUDEDIR}")			
+
+#set(LEAKTRACER_INCLUDEDIR ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparts/libleaktracer/include)
+include_directories("${FFMPEG_INCLUDEDIR}" "${BASELIB_INCLUDEDIR}" "${BASELIBROOT_INCLUDEDIR}" "${X264_INCLUDEDIR}" "${FDKAAC_INCLUDEDIR}" "${LIBYUV_INCLUDEDIR}" "${LIBRTMP_INCLUDEDIR}" )			
 
 ###library
 #ffmpge	
@@ -53,6 +57,8 @@ set(LIBYUV_LIB  ${ALL_LIB_PATH}/libyuv/lib/libyuv.a)
 
 #libyuv
 set(LIBRTMP_LIB  ${ALL_LIB_PATH}/librtmp/lib/librtmp.a)
+
+#set(LEAKTRACER_LIB  ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparts/libleaktracer/android/lib/libleaktracer.a)	
 set (STATICLIBS ${FFMPEGLIB} ${BASELIB_LIB} ${X264_LIB} ${FDKAAC_LIB} ${LIBYUV_LIB} ${LIBRTMP_LIB})
 
 #project build

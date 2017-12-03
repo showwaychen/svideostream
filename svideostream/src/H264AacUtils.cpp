@@ -52,6 +52,12 @@ bool CH264AacUtils::IsKeyFrame(uint8_t* vdata, int nsize, bool annexb /*= true*/
 	}
 	return false;
 }
+
+//CH264AacUtils::FRAMETYPE CH264AacUtils::FrameType(uint8_t* vdata, int nsize, bool annexb /*= true*/)
+//{
+//
+//}
+
 int ReverseBeLe(int a)
 {
 	union {

@@ -79,12 +79,12 @@ CSVideoStream_JniWrap* CSVideoStream_JniWrap::GetInst(JNIEnv* jni, jobject j_obj
 }
 
 CRegisterNativeM CSVideoStream_JniWrap::s_registernm("cn/cxw/svideostreamlib/SVideoStream", ls_nm, ARRAYSIZE(ls_nm));
-CSVideoStream_JniWrap::CSVideoStream_JniWrap(JNIEnv *env, jobject thiz)
+CSVideoStream_JniWrap::CSVideoStream_JniWrap(JNIEnv *env, jobject thiz):
+m_pVideoStream(new CSVideoStream)
 {
 	m_jThiz = env->NewGlobalRef(thiz); 
 	jclass oclass = env->GetObjectClass(m_jThiz);
 	m_jEventCallback = env->GetMethodID(oclass, "nativeEventCallback", "(II)V");
-	m_pVideoStream = new CSVideoStream;
 	m_pVideoStream->SetEventCallback(this);
 }
 
@@ -156,7 +156,7 @@ void JNICALL CSVideoStream_JniWrap::nativeSetEncoderType(JNIEnv* env, jobject th
 	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz);
 	if (instance != nullptr)
 	{
-		instance->SetVideoEncoderType((VideoEncoderType)type);
+		instance->SetVideoEncoderType((CVideoEncoderFactory::VideoEncoderType)type);
 	}
 }
 
@@ -254,37 +254,28 @@ void JNICALL CSVideoStream_JniWrap::native_Destroy(JNIEnv *env, jobject thiz)
 
 int CSVideoStream_JniWrap::StartStream()
 {
-	if (m_pVideoStream->GetAudioEnable() && m_pAudioEncoder == nullptr)
+	CCommonSetting::StartLeakMemDetect();
+	if (m_pVideoStream->GetAudioEnable() && m_pAudioEncoder.get() == nullptr)
 	{
-		m_pAudioEncoder = new CAudioEncoderFdkaac();
+		m_pAudioEncoder.reset(new CAudioEncoderFdkaac());
 	}
-	if (m_pVideoEncoder == nullptr)
-	{
-		if (m_eVideoEncoderType == H264ENCODER_X264)
-		{
-			m_pVideoEncoder = new CVideoEncoderX264();
-		}
-		else
-		{
-			m_pVideoEncoder = new CVideoEncoderMediaCodec;
-		}
-	}
-	m_pVideoEncoder->SetConfigs(m_H264Configs);
-	m_pVideoStream->SetAudioCodec(m_pAudioEncoder);
-	m_pVideoStream->SetVideoCodec(m_pVideoEncoder);
-	return m_pVideoStream->StartStream();
+
+	SetAndConfigVideoEncoder();
+	
+	
+	m_pVideoStream->SetAudioCodec(m_pAudioEncoder.get());
+	m_pVideoStream->SetVideoCodec(m_pVideoEncoder.get());
+	return m_pVideoStream->StartStream(true);
 }
 
 int CSVideoStream_JniWrap::StopStream()
 {
-	return m_pVideoStream->StopStream();
+	return m_pVideoStream->StopStream(true);
 }
 
 CSVideoStream_JniWrap::~CSVideoStream_JniWrap()
 {
-	SAFE_DELETE(m_pVideoStream);
-	SAFE_DELETE(m_pAudioEncoder);
-	SAFE_DELETE(m_pVideoEncoder);
+	m_pVideoStream->SetEventCallback(nullptr);
 	GetEnv(GetJavaVM())->DeleteGlobalRef(m_jThiz);
 }
 
@@ -434,4 +425,27 @@ jint JNICALL CSVideoStream_JniWrap::nativeGetState(JNIEnv *env, jobject thiz)
 		return instance->m_pVideoStream->GetState();
 	}
 	return StreamState_NONE;
+}
+
+void CSVideoStream_JniWrap::SetAndConfigVideoEncoder()
+{
+	static CVideoEncoderFactory::VideoEncoderType ls_eOldType = CVideoEncoderFactory::H264ENCODER_X264;
+	bool bneedset = false;
+	if (m_pVideoEncoder.get() ==  nullptr)
+	{
+		bneedset = true;
+	}
+	else
+	{
+		if (ls_eOldType != m_eVideoEncoderType)
+		{
+			bneedset = true;
+		}
+	}
+	if (bneedset)
+	{
+		m_pVideoEncoder.reset(CVideoEncoderFactory::CreateVideoEncoder(m_eVideoEncoderType));
+		ls_eOldType = m_eVideoEncoderType;
+	}
+	m_pVideoEncoder->SetConfigs(m_H264Configs);
 }

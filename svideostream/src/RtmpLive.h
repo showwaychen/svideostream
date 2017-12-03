@@ -7,7 +7,7 @@
 #include "PlatformThreadEx.h"
 #include "BufferQuene.h"
 #include"RtmpCommon.h"
-
+#include <memory>
 class CRtmpLive
 {
 public:
@@ -44,12 +44,8 @@ private:
 	class RtmpPacket
 	{
 	public:
-		static void FreeFun(void* data)
-		{
-			RtmpPacket *ins = (RtmpPacket*)data;
-			delete ins;
-		}
-		static bool IsKeyVideoFrame(RtmpPacket* packet)
+
+		static bool IsKeyVideoFrame(std::unique_ptr<RtmpPacket>& packet)
 		{
 			if (packet == nullptr)
 			{
@@ -66,28 +62,25 @@ private:
 		bool m_bKeyFrame;
 		int64_t m_pts;
 		int m_nSize;
-		uint8_t* m_pData;
+		std::unique_ptr<uint8_t> m_pData;
 		RtmpPacket(PacketType type, int64_t pts, int nsize, bool keyframe)
 		{
-			m_pData = nullptr;
 			m_eType = type;
 			m_nSize = nsize;
 			m_bKeyFrame = keyframe;
+			m_pts = pts;
 		}
 		void FillData(uint8_t* data, int nsize)
 		{
-			if (m_pData == nullptr)
+			if (m_pData.get() == nullptr)
 			{
-				m_pData = new uint8_t[m_nSize];
+				m_pData.reset(new uint8_t[m_nSize]);
 			}
-			memcpy(m_pData, data, nsize);
+			memcpy(m_pData.get(), data, nsize);
 		}
-		~RtmpPacket()
+		uint8_t* GetData()
 		{
-			if (m_pData != nullptr)
-			{
-				delete m_pData;
-			}
+			return m_pData.get();
 		}
 	};
 	bool m_bAudioEnable = false;
@@ -104,8 +97,8 @@ private:
 	CPlatformThreadEx<CRtmpLive> m_hSendThread;
 	ILiveEventObserver *m_pEventObserv = nullptr;
 	bool m_bNeedWaitKeyFrame = false;
-	CBufferQuene<RtmpPacket*, &RtmpPacket::FreeFun> m_qAudio;
-	CBufferQuene<RtmpPacket*, &RtmpPacket::FreeFun> m_qVideo;
+	CBufferQueneEx<RtmpPacket> m_qAudio;
+	CBufferQueneEx<RtmpPacket> m_qVideo;
 	uint8_t m_VideoSPSData[RTMP_VIDEO_SPECDATA_SIZE];
 	int m_nVideoSPSDataLen = 0;
 	uint8_t m_VideoPPSData[RTMP_VIDEO_SPECDATA_SIZE];

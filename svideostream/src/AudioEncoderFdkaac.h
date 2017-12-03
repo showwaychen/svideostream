@@ -4,6 +4,7 @@
 #include "aacenc_lib.h"
 #include "PlatformThreadEx.h"
 #include "BufferQuene.h"
+#include <memory>
 class CAudioEncoderFdkaac :public CAudioEncoderBase
 {
 	bool m_bAbort = false;
@@ -13,7 +14,7 @@ class CAudioEncoderFdkaac :public CAudioEncoderBase
 	bool m_bEncoderOk = false;
 	bool OnAudioEncoderThread();
 	CPlatformThreadEx<CAudioEncoderFdkaac> m_hEncodeThread;
-	CBufferQuene<AudioFrame*, &AudioFrame::FreeFun> m_qFrameQ;
+	CBufferQueneEx<AudioFrame> m_qFrameQ;
 public:
 	CAudioEncoderFdkaac();
 	virtual int OpenEncoder();

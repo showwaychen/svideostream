@@ -47,7 +47,7 @@ bool CVideoEncoderMediaCodec::OnEncodeThread()
 	AttachThreadScoped attachthread(GetJavaVM());
 	JNIEnv* jnienv = attachthread.env();
 	int inputbufferindex = -1;
-	uint8_t* convertDstImage = nullptr;
+	std::unique_ptr<uint8_t> convertDstImage;
 	int convertSize = 0;
 	bool needCovert = false;
 	
@@ -57,8 +57,8 @@ bool CVideoEncoderMediaCodec::OnEncodeThread()
 	{
 		needCovert = true;
 		convertSize = CH264AacUtils::GetFrameSize(m_eEncoderSupportColorFormate, m_nWidth, m_nHeight);
-		convertDstImage = new uint8_t[convertSize];
-		memset(convertDstImage, 0, convertSize);
+		convertDstImage.reset(new uint8_t[convertSize]);
+		memset(convertDstImage.get(), 0, convertSize);
 	}
 	LOGD << "encoder support input image format = " << m_eEncoderSupportColorFormate;
 	//get input buffers
@@ -81,8 +81,8 @@ bool CVideoEncoderMediaCodec::OnEncodeThread()
 	while (!m_bAbort)
 	{
 		//get a frame
-		VideoFrame *newframe = nullptr;
-		if (!m_qVideoFrameQ.PullData(&newframe, true))
+		std::unique_ptr<VideoFrame> newframe;
+		if (!m_qVideoFrameQ.PullData(newframe, true))
 		{
 			usleep(20000);
 			continue;
@@ -106,14 +106,13 @@ bool CVideoEncoderMediaCodec::OnEncodeThread()
 				int uoffset = m_nWidth * m_nHeight;
 				int voffset = m_nWidth * m_nHeight * 5 / 4;
 				libyuv::ConvertFromI420(i420data, m_nWidth, i420data + uoffset, m_nWidth / 2,
-					i420data + voffset, m_nWidth / 2, convertDstImage, m_nWidth, m_nWidth, m_nHeight, mapFromImageFormat(m_eEncoderSupportColorFormate));
-				memcpy(yuv_buffer, convertDstImage, convertSize);
+					i420data + voffset, m_nWidth / 2, convertDstImage.get(), m_nWidth, m_nWidth, m_nHeight, mapFromImageFormat(m_eEncoderSupportColorFormate));
+				memcpy(yuv_buffer, convertDstImage.get(), convertSize);
 			}
 			else
 			{
 				memcpy(yuv_buffer, newframe->GetFrameData(), convertSize);
 			}
-			delete newframe;
 			jnienv->DeleteLocalRef(ainput_buffer);
 			//encoding a frame
 			encode_status = jnienv->CallBooleanMethod(m_jMediaCodec,
@@ -172,10 +171,7 @@ bool CVideoEncoderMediaCodec::OnEncodeThread()
 			
 	}
 end:
-	if (convertDstImage != nullptr)
-	{
-		delete convertDstImage;
-	}
+
 	jnienv->CallIntMethod(m_jMediaCodec, m_jCloseEncoderMethod);
 	return false;
 }
@@ -234,6 +230,9 @@ CVideoEncoderMediaCodec::CVideoEncoderMediaCodec()
 	m_jinfo_index = jni->GetFieldID(_class_, "index", "I");
 	m_jinfo_iskeyframe = jni->GetFieldID(_class_, "isKeyFrame", "Z");
 	m_jinfo_pts = jni->GetFieldID(_class_, "presentationTimestampUs", "J");
+
+
+	m_qVideoFrameQ.SetMaxCount(kMaxBufferSize);
 }
 
 int CVideoEncoderMediaCodec::OpenEncoder()
@@ -266,11 +265,11 @@ int CVideoEncoderMediaCodec::CloseEncoder()
 
 int CVideoEncoderMediaCodec::PushData(uint8_t *imagedata, int nsize, int64_t pts)
 {
-	VideoFrame *frame = new VideoFrame(m_nWidth, m_nHeight);
+	std::unique_ptr<VideoFrame> frame(new VideoFrame(m_nWidth, m_nHeight));
 	frame->FillData(imagedata, nsize, pts);
-	if (!m_qVideoFrameQ.PushData(frame, true))
+	if (!m_qVideoFrameQ.PushData(frame, false))
 	{
-		delete frame;
+		return 1;
 	}
 	return 0;
 }
