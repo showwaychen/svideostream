@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include"string.h"
-#define VERSION		"1.4"
+#define VERSION		"1.5"
 
 class sH264CodecInfo
 {

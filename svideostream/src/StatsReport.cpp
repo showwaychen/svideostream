@@ -183,7 +183,7 @@ const char* CStatsReport::Value::display_name() const
 	case kSVNLiveVQueueFrameNums:
 		return "LiveVideoQueueFramesNum";
 	case kSVNLiveSendBandwidth:
-		return "LiveSendBandwidth";
+		return "LiveSendBandwidth(kbps)";
 	case kSVNLiveAQueueFrameNums:
 		return "LiveAudioQueueFramesNum";
 	}

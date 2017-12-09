@@ -1,6 +1,8 @@
 #include "RtmpLive.h"
 #include "H264AacUtils.h"
 #include <memory>
+#include <functional>
+#include"base/timeutils.h"
 int CRtmpLive::OnAVSpecdata(uint8_t* data, int nsize, RtmpPacket::PacketType type)
 {
 	if (type == RtmpPacket::RP_AUDIO)
@@ -34,7 +36,19 @@ int CRtmpLive::OnAudioQueneFull()
 
 int CRtmpLive::OnVideoQueneFull()
 {
-	if (!m_qVideo.ClearUtil(&RtmpPacket::IsKeyVideoFrame))
+	int64_t checkpts = 0;
+	std::function<bool(std::unique_ptr<RtmpPacket>&)> checkfun = [&checkpts](std::unique_ptr<RtmpPacket>& vpacket)->bool{
+		bool iskeyframe = RtmpPacket::IsKeyVideoFrame(vpacket);
+		checkpts = vpacket->m_pts;
+		if (iskeyframe)
+		{
+			return true;
+		}
+		checkpts = vpacket->m_pts;
+		return false;
+	};
+	LOGD << "OnVideoQueneFull checkpts = "<< checkpts;
+	if (!m_qVideo.ClearUtilReverseFind(checkfun))
 	{
 		m_bNeedWaitKeyFrame = true;
 		NotifyEvent(LE_NEED_KEYFRAME, 0);
@@ -48,6 +62,10 @@ int CRtmpLive::OnVideoQueneFull()
 			NotifyEvent(LE_NEED_KEYFRAME, 0);
 		}
 	}
+
+	//remove audio packets by checkpts
+	LOGD << "RemoveAudioPacketUtil checkpts = "<<checkpts;
+	RemoveAudioPacketUtil(checkpts);
 	return 0;
 }
 
@@ -412,6 +430,7 @@ int CRtmpLive::SendRtmpData(RTMPPacket *pkt)
 	if ((nEndTime - nStartTime) >= 500) {
 		LOGI<<"Send packet timeout, > 500ms.";
 	}
+	UpdateSendBandwidth(pkt->m_nBodySize + 12);
 	return 0;
 }
 
@@ -456,32 +475,12 @@ bool CRtmpLive::OnSendThread()
 		if (m_qVideo.PullData(avpacket))
 		{
 			LOGI << "send video rtmp packet datasize = " << avpacket->m_nSize << " is keyframe = " << avpacket->m_bKeyFrame;
-			if (m_bNeedWaitKeyFrame && avpacket->m_bKeyFrame)
+
+
+			if (0 != SendAVPacket(avpacket.get()))
 			{
-				m_bNeedWaitKeyFrame = false;
+				break;
 			}
-			if (m_bNeedWaitKeyFrame)
-			{
-				if (avpacket->m_bKeyFrame)
-				{
-					m_bNeedWaitKeyFrame = false;
-					if (0 != SendAVPacket(avpacket.get()))
-					{
-						break;
-					}
-				}
-			}
-			else
-			{
-				if (0 != SendAVPacket(avpacket.get()))
-				{
-					break;
-				}
-			}
-		}
-		else
-		{
-			sleeptime = 30000;
 		}
 		if (m_bAudioEnable)
 		{
@@ -561,6 +560,40 @@ int CRtmpLive::ConnectServer()
 	return 0;
 }
 
+void CRtmpLive::RemoveAudioPacketUtil(int64_t pts)
+{
+	if (!m_bAudioEnable)
+	{
+		return;
+	}
+	m_qAudio.ClearUtil([&pts](std::unique_ptr<RtmpPacket>& apacket)->bool
+	{
+		if (apacket->m_pts >= pts)
+		{
+			return true;
+		}
+		return false;
+	});
+}
+
+void CRtmpLive::UpdateSendBandwidth(int sendbytes)
+{
+	m_nCumulativeBytes += sendbytes;
+	if (m_nLastSendBandwidthStatisticsTime == 0)
+	{
+		m_nLastSendBandwidthStatisticsTime = rtc::TimeMillis();
+		return;
+	}
+	int64_t curtime = rtc::TimeMillis();
+	int timedelta = curtime - m_nLastSendBandwidthStatisticsTime;
+	if (timedelta >= 1000)
+	{
+		m_nSendBandwidth = m_nCumulativeBytes * 1000 * 8 / timedelta;
+		m_nLastSendBandwidthStatisticsTime = curtime;
+		m_nCumulativeBytes = 0;
+	}
+}
+
 CRtmpLive::CRtmpLive() :
 m_hSendThread(this, &CRtmpLive::OnSendThread,"livethread")
 {
@@ -572,6 +605,7 @@ CRtmpLive::LiveRuntimeInfo CRtmpLive::GetRuntimeInfo()
 	CRtmpLive::LiveRuntimeInfo info;
 	info.m_nAudioFramesNum = m_qAudio.Size();
 	info.m_nVideoFrameNum = m_qVideo.Size();
+	info.m_nSendBandwidth = m_nSendBandwidth;
 	return info;
 }
 
@@ -607,10 +641,14 @@ int CRtmpLive::StartLive()
 			return -1;
 		}
 	}
+	m_nLastSendBandwidthStatisticsTime = 0;
+	m_nCumulativeBytes = 0;
+	m_nSendBandwidth = 0;
 	m_bStarted = true;
 	m_nVideoSPSDataLen = m_nVideoPPSDataLen = m_nAudioSpecdataLen = 0;
-	int audiomaxcount = m_AacInfo.m_nSampleRate / m_AacInfo.m_nFrameSize * 3;
-	int videomaxcount = m_H264Info.m_nGop;
+	int audiomaxcount = m_AacInfo.m_nSampleRate / m_AacInfo.m_nFrameSize * 6;
+	//
+	int videomaxcount = m_H264Info.m_nGop + 10;
 	LOGI << "audiomaxcount = " << audiomaxcount << " videomaxcount = " << videomaxcount;
 	m_qAudio.SetMaxCount(audiomaxcount);
 	m_qVideo.SetMaxCount(videomaxcount);
@@ -650,9 +688,23 @@ int CRtmpLive::SendVideoData(uint8_t* vdata, int nsize, int64_t npts)
 	{
 		return OnAVSpecdata(vdata, nsize, RtmpPacket::RP_VIDEO);
 	}
-	std::unique_ptr<RtmpPacket> vpacket(new RtmpPacket(RtmpPacket::RP_VIDEO, npts, nsize, CH264AacUtils::IsKeyFrame(vdata, nsize, m_H264Info.m_bAnnexB)));
+	if (m_bNeedWaitKeyFrame)
+	{
+		if (CH264AacUtils::IsKeyFrame(vdata, nsize, m_H264Info.m_bAnnexB))
+		{
+			RemoveAudioPacketUtil(npts);
+			m_bNeedWaitKeyFrame = false;
+		}
+		else
+		{
+			LOGD << "need wait keyframe drop this frame";
+			return 0;
+		}
+	}
+	bool iskeyframe = CH264AacUtils::IsKeyFrame(vdata, nsize, m_H264Info.m_bAnnexB);
+	std::unique_ptr<RtmpPacket> vpacket(new RtmpPacket(RtmpPacket::RP_VIDEO, npts, nsize, iskeyframe));
 	vpacket->FillData(vdata, nsize);
-	LOGD << "CRtmpLive::SendVideoData pts = " << npts;
+	LOGD << "CRtmpLive::SendVideoData pts = " << npts<< " iskeyframe = "<< iskeyframe;
 
 	if (!m_qVideo.PushData(vpacket))
 	{

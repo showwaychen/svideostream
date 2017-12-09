@@ -22,11 +22,14 @@ import cn.cxw.svideostream.application.GlobalVideoStream;
 import cn.cxw.svideostream.application.MainApplication;
 import cn.cxw.svideostream.widget.InfoHudViewHolder;
 import cn.cxw.svideostream.widget.SurfaceViewPreview;
+import cn.cxw.svideostreamlib.CommonSetting;
 import cn.cxw.svideostreamlib.GPUImageExFrameSource;
 import cn.cxw.svideostreamlib.SVideoStream;
 import cn.cxw.svideostreamlib.VideoFrameSource;
 import cn.cxw.svideostreamlib.VideoStreamConstants;
 import cn.cxw.svideostreamlib.VideoStreamProxy;
+
+import static android.view.View.VISIBLE;
 
 /**
  * Created by cxw on 2017/11/9.
@@ -44,7 +47,7 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
     private PowerManager.WakeLock mWakeLock;
     CheckBox m_cbRecord = null;
     CheckBox mcbLive = null;
-    CheckBox m_cbCameraSwitch = null;
+    Button m_cbCameraSwitch = null;
     CheckBox m_cbLight = null;
     SurfaceViewPreview m_svDisplay = null;
     FrameLayout mflCamera = null;
@@ -67,14 +70,14 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
     void InitView()
     {
         mflCamera = (FrameLayout)findViewById(R.id.fl_camera);
-        m_cbCameraSwitch = (CheckBox)findViewById(R.id.cb_cameraswitch);
+        m_cbCameraSwitch = (Button)findViewById(R.id.cb_cameraswitch);
         m_cbLight = (CheckBox)findViewById(R.id.cb_light);
         m_cbRecord = (CheckBox)findViewById(R.id.cb_record);
         m_cbRecord.setEnabled(false);
         m_svDisplay = new SurfaceViewPreview(this);
         mflCamera.addView(m_svDisplay);
         mbtnFilter = (Button)findViewById(R.id.btn_filter);
-        mbtnFilter.setVisibility(View.VISIBLE);
+        mbtnFilter.setVisibility(VISIBLE);
         mcbLive = (CheckBox)findViewById(R.id.cb_live);
         mcbLive.setEnabled(false);
         m_cbCameraSwitch.setOnClickListener(this);
@@ -109,8 +112,10 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
                 }
             };
         };
-//        CommonSetting.nativeSetLogLevel(VideoStreamConstants.LS_INFO);
+        CommonSetting.nativeSetLogLevel(VideoStreamConstants.LS_INFO);
         mGPUVideoSource = new GPUImageExFrameSource();
+//        m_cbCameraSwitch.setVisibility((mGPUVideoSource.hasBackCamera() && mGPUVideoSource.hasFrontCamera())?View.VISIBLE:View.INVISIBLE);
+        m_cbCameraSwitch.setEnabled((mGPUVideoSource.hasBackCamera() && mGPUVideoSource.hasFrontCamera())?true:false);
         mGPUVideoSource.setObserver(this);
         mVideoStream.setVideoFrameSource(mGPUVideoSource);
         mVideoStream.setStreamEventObserver(this);
@@ -161,6 +166,7 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
         mGPUVideoSource.setObserver(null);
 //        mGPUVideoSource.stopPreview();
         mGPUVideoSource.setPreviewView(null);
+//        GlobalVideoStream.destroyGlobalVideoStream();
     }
     // 获取电源锁
     protected void acquireWakeLock() {
@@ -210,7 +216,7 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
                     m_cbRecord.setChecked(false);
                     if (0 != StartStream(false))
                     {
-                        m_cbCameraSwitch.setChecked(true);
+//                        m_cbCameraSwitch.setChecked(true);
                         m_cbRecord.setText(R.string.start_record);
 
                         return ;
@@ -252,6 +258,12 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
                     StopStream();
 //                    mcbLive.setText(R.string.start_live);
 //                    m_cbRecord.setEnabled(true);
+                }
+                break;
+            case R.id.cb_cameraswitch:
+                if (mGPUVideoSource != null)
+                {
+                    mGPUVideoSource.switchCamera();
                 }
                 break;
         }

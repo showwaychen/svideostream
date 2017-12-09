@@ -43,6 +43,18 @@ public class GPUImageExFrameSource extends VideoFrameSource implements GPUImageE
         mGpuImageEx.stopPreview();
         mState = State.kStopped;
     }
+    public boolean hasFrontCamera()
+    {
+        return mGpuImageEx.hadFrontCamera();
+    }
+    public boolean hasBackCamera()
+    {
+        return mGpuImageEx.hadBackCamera();
+    }
+    public void switchCamera()
+    {
+        mGpuImageEx.switchCamera();
+    }
     public void setCameraSize(int width, int height)
     {
         mGpuImageEx.setCameraSize(width, height);
@@ -60,11 +72,9 @@ public class GPUImageExFrameSource extends VideoFrameSource implements GPUImageE
         if (stride != mSrcStride)
         {
             mSrcStride = stride;
-            if (mObserver != null)
-            {
-                mState = State.kStarted;
-                mObserver.onStarted();
-            }
+            mState = State.kStarted;
+
+            NotifyObserver();
         }
 
         if (mFrameCallback != null)

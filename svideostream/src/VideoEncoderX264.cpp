@@ -26,12 +26,12 @@ bool CVideoEncoderX264::OnEncodeThread()
 		LOGE<<"X264 get headers failed.";
 		return false;
 	}
-	if (m_pCallBack == nullptr)
+	if (m_pCallBack.expired())
 	{
 		LOGE << "x264 callback is null";
 		return false;
 	}
-	m_pCallBack->OnVideoEncodedData(pHeaderNals[0].p_payload, pHeaderNals[0].i_payload + pHeaderNals[1].i_payload, -1, -1);
+	OnCallback(pHeaderNals[0].p_payload, pHeaderNals[0].i_payload + pHeaderNals[1].i_payload, -1, -1);
 
 	int nUOffset = m_nWidth * m_nHeight;
 	int nVOffset = m_nWidth * m_nHeight + m_nWidth * m_nHeight / 4;
@@ -63,7 +63,7 @@ bool CVideoEncoderX264::OnEncodeThread()
 		}
 		
 		if (nNalsSize > 0) {
-			m_pCallBack->OnVideoEncodedData(pNals[0].p_payload, nNalsSize, picOut.i_pts, picOut.i_dts);
+			OnCallback(pNals[0].p_payload, nNalsSize, picOut.i_pts, picOut.i_dts);
 		}
 
 		
@@ -82,7 +82,7 @@ bool CVideoEncoderX264::OnEncodeThread()
 				break;
 			}
 			if (nNalsSize > 0) {
-				m_pCallBack->OnVideoEncodedData(pNals[0].p_payload, nNalsSize, picOut.i_pts, picOut.i_dts);
+				OnCallback(pNals[0].p_payload, nNalsSize, picOut.i_pts, picOut.i_dts);
 			}
 		}
 	}
@@ -383,4 +383,10 @@ CVideoEncoderBase::EncoderRunTimeInfo CVideoEncoderX264::GetRunTimeInfo()
 	info.m_nBufferRemainNum = m_qVideoFrameQ.Size();
 	info.m_nEncodeAvgTimeMs = m_nAvgEncodedTimeMs;
 	return info;
+}
+
+CVideoEncoderX264::~CVideoEncoderX264()
+{
+	CloseEncoder();
+	LOGW << "~CVideoEncoderX264";
 }

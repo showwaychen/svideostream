@@ -10,13 +10,15 @@ enum SettingKeyValue
 {
 	SKV_H264ENCODERCONFIG = 0
 };
-class CSVideoStream_JniWrap: public CSVideoStream::IStreamEventObserver
+
+
+class CSVideoStream_JniWrap: public CSVideoStream::IStreamEventObserver, public std::enable_shared_from_this<CSVideoStream_JniWrap>
 {
 
-	std::unique_ptr<CVideoEncoderBase> m_pVideoEncoder;
-	std::unique_ptr<CAudioEncoderBase> m_pAudioEncoder;
+	std::shared_ptr<CVideoEncoderBase> m_pVideoEncoder;
+	std::shared_ptr<CAudioEncoderBase> m_pAudioEncoder;
 
-	std::unique_ptr<CSVideoStream> m_pVideoStream;
+	std::shared_ptr<CSVideoStream> m_pVideoStream;
 	CVideoEncoderFactory::VideoEncoderType m_eVideoEncoderType = CVideoEncoderFactory::H264ENCODER_X264;
 
 	jobject m_jThiz;
@@ -24,7 +26,12 @@ class CSVideoStream_JniWrap: public CSVideoStream::IStreamEventObserver
 
 	CMediaConfig m_H264Configs;
 
-	static CSVideoStream_JniWrap* GetInst(JNIEnv* jni, jobject j_object);
+	static std::shared_ptr<CSVideoStream_JniWrap> GetInst(JNIEnv* jni, jobject j_object);
+
+	void Init()
+	{
+		m_pVideoStream->SetEventCallback(shared_from_this());
+	}
 public:
 	static CRegisterNativeM s_registernm;
 	CSVideoStream_JniWrap(JNIEnv *env, jobject thiz);

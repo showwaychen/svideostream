@@ -2,6 +2,15 @@
 
 
 
+void CVideoEncoderBase::OnCallback(uint8_t* data, int nsize, int64_t pts, int64_t dts)
+{
+	auto callback = m_pCallBack.lock();
+	if (callback != nullptr)
+	{
+		callback->OnVideoEncodedData(data, nsize, pts, dts);
+	}
+}
+
 int CVideoEncoderBase::StringToProfile(const std::string& profile)
 {
 	if (profile == "baseline")

@@ -61,7 +61,8 @@ protected:
 	bool m_bReqKeyFrame = false;
 
 	CMediaConfig m_H264Configs;
-	IEncodedCallBack* m_pCallBack = nullptr;
+	std::weak_ptr<IEncodedCallBack> m_pCallBack ;
+	void OnCallback(uint8_t* data, int nsize, int64_t pts, int64_t dts);
 	const int kMaxBufferSize = 10;
 
 	static int StringToProfile(const std::string& profile);
@@ -70,7 +71,7 @@ public:
 	static const char kPreset[];
 	static const char kTune[];
 	static const char kRcMethod[];
-	void SetEncodedCallBack(IEncodedCallBack *callback)
+	void SetEncodedCallBack(std::weak_ptr<IEncodedCallBack> callback)
 	{
 		m_pCallBack = callback;
 	}

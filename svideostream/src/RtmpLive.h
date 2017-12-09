@@ -95,7 +95,7 @@ private:
 	//rtmp
 	RTMP* m_pRtmp;
 	CPlatformThreadEx<CRtmpLive> m_hSendThread;
-	ILiveEventObserver *m_pEventObserv = nullptr;
+	std::weak_ptr<ILiveEventObserver> m_pEventObserv ;
 	bool m_bNeedWaitKeyFrame = false;
 	CBufferQueneEx<RtmpPacket> m_qAudio;
 	CBufferQueneEx<RtmpPacket> m_qVideo;
@@ -127,9 +127,9 @@ private:
 	int SendRtmpData(RTMPPacket *pkt);
 	void NotifyEvent(LiveEvent event, int nerror)
 	{
-		if (m_pEventObserv != nullptr)
+		if (auto ins =  m_pEventObserv.lock())
 		{
-			m_pEventObserv->NotifyEvent(event, nerror);
+			ins->NotifyEvent(event, nerror);
 		}
 	}
 	void SetState(LiveState state)
@@ -138,8 +138,20 @@ private:
 	}
 	bool OnSendThread();
 	int ConnectServer();
+
+	void RemoveAudioPacketUtil(int64_t pts);
+
+	//
+	int64_t m_nLastSendBandwidthStatisticsTime = 0;
+	int m_nCumulativeBytes = 0;
+	int m_nSendBandwidth = 0;
+	void UpdateSendBandwidth(int sendbytes);
 public:
 	CRtmpLive();
+	~CRtmpLive()
+	{
+		LOGW << "~CRtmpLive";
+	}
 	void SetH264CodecInfo(sH264CodecInfo vinfo)
 	{
 		m_H264Info = vinfo;
@@ -163,7 +175,7 @@ public:
 	LiveRuntimeInfo GetRuntimeInfo();
 	int StartLive();
 	void StopLive();
-	void SetEventObserver(ILiveEventObserver *observer)
+	void SetEventObserver(std::weak_ptr<ILiveEventObserver> observer)
 	{
 		m_pEventObserv = observer;
 	}

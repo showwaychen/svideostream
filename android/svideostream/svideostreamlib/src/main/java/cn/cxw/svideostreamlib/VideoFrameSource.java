@@ -1,5 +1,6 @@
 package cn.cxw.svideostreamlib;
 
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 
 /**
@@ -31,10 +32,21 @@ public abstract class VideoFrameSource {
     {
         void onStarted();
     }
-    VideoFrameSourceObserver mObserver = null;
+    WeakReference<VideoFrameSourceObserver> mObserver = null;
     public void setObserver(VideoFrameSourceObserver cb)
     {
-        mObserver = cb;
+        mObserver = new WeakReference<VideoFrameSourceObserver>(cb);
+    }
+    void NotifyObserver()
+    {
+        if (mObserver != null)
+        {
+            VideoFrameSourceObserver tmpobserver = mObserver.get();
+            if (tmpobserver != null)
+            {
+                tmpobserver.onStarted();
+            }
+        }
     }
     public int getSrcWidth()
     {

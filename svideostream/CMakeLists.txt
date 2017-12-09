@@ -67,7 +67,10 @@ file(GLOB  PLAYER_SOURCES_FILES 		${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
 										 ${CMAKE_CURRENT_SOURCE_DIR}/android/*.cpp 
 										 ${CMAKE_CURRENT_SOURCE_DIR}/android/*.h
 										 )
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/libs/${ANDROID_ABI})										 
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/libs/${ANDROID_ABI})	
+
+#sub module
+add_subdirectory(android/openglcapture)									 
 add_library( 
              svideostream
              SHARED

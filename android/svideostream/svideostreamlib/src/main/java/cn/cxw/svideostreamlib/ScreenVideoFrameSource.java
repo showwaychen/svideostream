@@ -6,7 +6,6 @@ import android.hardware.display.VirtualDisplay;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.projection.MediaProjection;
-import android.nfc.Tag;
 import android.os.Build;
 import android.os.Handler;
 import android.support.annotation.RequiresApi;
@@ -112,11 +111,8 @@ public class ScreenVideoFrameSource extends VideoFrameSource{
                     if (mSrcStride == 0) {
                         mSrcStride = planes[0].getRowStride();
 
-                        if (mObserver != null)
-                        {
                             mState = State.kStarted;
-                            mObserver.onStarted();
-                        }
+                            NotifyObserver();
                         Log.d(TAG, "widthStride"+mSrcStride+"width:"+mSrcWidth+"heigth:"+mSrcHeight);
                     }
 //                    Log.d(TAG, "Stride = " + mSrcStride + " width = " + mSrcWidth + "height = " + mSrcHeight + " bufferisize" + buffer.remaining());

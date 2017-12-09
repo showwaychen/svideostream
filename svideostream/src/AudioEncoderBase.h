@@ -50,9 +50,17 @@ protected:
 	int m_nChannels;
 	int m_nBitrate;
 	int m_nFrameSampleSize;
-	IEncodedCallBack* m_pCallBack = nullptr;
+	std::weak_ptr<IEncodedCallBack> m_pCallBack;
+	void OnCallback(uint8_t* data, int nsize, int64_t pts)
+	{
+		auto callback = m_pCallBack.lock();
+		if (callback != nullptr)
+		{
+			callback->OnAudioEncodedData(data, nsize, pts);
+		}
+	}
 public:
-	void SetEncodedCallBack(IEncodedCallBack *callback)
+	void SetEncodedCallBack(std::weak_ptr<IEncodedCallBack> callback)
 	{
 		m_pCallBack = callback;
 	}
@@ -75,4 +83,7 @@ public:
 
 	}
 };
+
+
+
 #endif 

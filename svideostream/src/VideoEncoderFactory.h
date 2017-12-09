@@ -1,5 +1,7 @@
 #ifndef VIDEOENCODER_FACTORY_H__
 #define VIDEOENCODER_FACTORY_H__
+#include <memory>
+
 class CVideoEncoderBase;
 class CVideoEncoderFactory
 {
@@ -9,7 +11,7 @@ public:
 		H264ENCODER_X264 = 0,
 		H264ENCODER_MEDIACODEC
 	};
-	static CVideoEncoderBase* CreateVideoEncoder(VideoEncoderType type);
+	static std::shared_ptr<CVideoEncoderBase> CreateVideoEncoder(VideoEncoderType type);
 };
 #endif
 

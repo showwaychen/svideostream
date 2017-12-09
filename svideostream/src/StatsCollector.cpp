@@ -1,6 +1,7 @@
 #include "StatsCollector.h"
 #include "Common.h"
 #include "SVideoStream.h"
+#include "base/stringencode.h"
 
 
 
@@ -39,7 +40,14 @@ void CStatsCollector::GetStats(StatsReports* reports)
 	{
 		m_cStatsReportRtmpLive.AddInt(CStatsReport::kSVNLiveAQueueFrameNums, m_pPc->m_pRtmpPublish->GetRuntimeInfo().m_nAudioFramesNum);
 		m_cStatsReportRtmpLive.AddInt(CStatsReport::kSVNLiveVQueueFrameNums, m_pPc->m_pRtmpPublish->GetRuntimeInfo().m_nVideoFrameNum);
-		//m_cStatsReportRtmpLive.AddString(CStatsReport::kSVNLiveSendBandwidth, "600kps");
+		m_cStatsReportRtmpLive.AddInt(CStatsReport::kSVNLiveSendBandwidth, m_pPc->m_pRtmpPublish->GetRuntimeInfo().m_nSendBandwidth / 1000 + 1);
+		/*m_cStatsReportRtmpLive.AddString(CStatsReport::kSVNLiveSendBandwidth, rtc::ToString(m_pPc->m_pRtmpPublish->GetRuntimeInfo().m_nSendBandwidth / 1000 + 1) + "/kbps");
+		int kbps = m_pPc->m_pRtmpPublish->GetRuntimeInfo().m_nSendBandwidth / 1000 + 1;
+		LOGD << "kbps = " << kbps;
+		std::string kbpsstr = rtc::ToString(kbps);
+		LOGD << "kbps = " << kbpsstr;
+
+		m_cStatsReportRtmpLive.AddString(CStatsReport::kSVNLiveSendBandwidth, kbpsstr);*/
 		reports->push_back(&m_cStatsReportRtmpLive);
 	}
 	reports->push_back(&m_cStatsReportImageProcess);

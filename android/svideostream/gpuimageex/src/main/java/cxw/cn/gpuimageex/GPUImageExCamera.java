@@ -246,6 +246,17 @@ public class GPUImageExCamera extends GPUImageFilter{
             mIsPreview = false;
         }
     }
+    public void restartPreview() {
+        stopPreview();
+        startPreview();
+    }
+    public void switchCamera() {
+        Log.i(TAG, "rotateCamera");
+        mCameraFace =  mCameraFace == Camera.CameraInfo.CAMERA_FACING_FRONT ?
+                Camera.CameraInfo.CAMERA_FACING_BACK :
+                Camera.CameraInfo.CAMERA_FACING_FRONT;
+        restartPreview();
+    }
     public boolean isPreview()
     {
         return mIsPreview;

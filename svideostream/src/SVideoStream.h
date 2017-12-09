@@ -22,7 +22,7 @@ class sInputAudioInfo
 {
 
 };
-class CSVideoStream : public CVideoEncoderBase::IEncodedCallBack, CAudioEncoderBase::IEncodedCallBack, CRtmpLive::ILiveEventObserver
+class CSVideoStream : public CVideoEncoderBase::IEncodedCallBack, public CAudioEncoderBase::IEncodedCallBack, public CRtmpLive::ILiveEventObserver, public std::enable_shared_from_this<CSVideoStream>
 {
 	friend CStatsCollector;
 
@@ -71,9 +71,9 @@ private:
 
 
 	//video encoder
-	CVideoEncoderBase* m_pVideoEncoder = nullptr;
+	std::shared_ptr<CVideoEncoderBase> m_pVideoEncoder;
 	//audio encoder
-	CAudioEncoderBase* m_pAudioEncoder = nullptr;
+	std::shared_ptr<CAudioEncoderBase> m_pAudioEncoder;
 
 	std::string m_strPublishUrl;
 	std::unique_ptr<CRtmpLive> m_pRtmpPublish ;
@@ -81,7 +81,7 @@ private:
 	std::string m_strFileName;
 	std::unique_ptr<CFFmpegMux> m_pFFmpegMux ;
 
-	IStreamEventObserver *m_pStreamEventObserver = nullptr;
+	std::weak_ptr<IStreamEventObserver> m_pStreamEventObserver;
 
 	//Statistics
 	CStatsCollector m_cStatsCollector;
@@ -99,9 +99,9 @@ private:
 	
 	void StreamEventNotify(StreamEvent event, StreamError error)
 	{
-		if (m_pStreamEventObserver != nullptr)
+		if (auto observer =  m_pStreamEventObserver.lock())
 		{
-			m_pStreamEventObserver->OnStreamEvent(event, error);
+			observer->OnStreamEvent(event, error);
 		}
 	}
 	void ResetMembers();
@@ -168,15 +168,15 @@ public:
 	int InputAudioData(uint8_t* data, int nszie, int64_t npts);
 	int SetWaterMarkData(uint8_t *data, int stride, int width, int height, int format);
 
-	void SetVideoCodec(CVideoEncoderBase* pvencoder)
+	void SetVideoCodec(std::shared_ptr<CVideoEncoderBase> pvencoder)
 	{
 		m_pVideoEncoder = pvencoder;
 	}
-	void SetAudioCodec(CAudioEncoderBase* paencoder)
+	void SetAudioCodec(std::shared_ptr<CAudioEncoderBase> paencoder)
 	{
 		m_pAudioEncoder = paencoder;
 	}
-	void SetEventCallback(IStreamEventObserver *observer)
+	void SetEventCallback(std::weak_ptr<IStreamEventObserver> observer)
 	{
 		m_pStreamEventObserver = observer;
 	}

@@ -41,6 +41,7 @@ public:
 	virtual int StartEncode() override;
 
 	virtual EncoderRunTimeInfo GetRunTimeInfo();
+	~CVideoEncoderX264();
 
 };
 #endif 

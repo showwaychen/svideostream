@@ -70,7 +70,7 @@ public class SVideoStream implements AudioRecorder.Listener {
     }
     public void SetStreamType(int type)
     {
-        nativeSetStreamType(type);
+            nativeSetStreamType(type);
     }
     public void SetSrcType(int type)
     {
@@ -119,7 +119,9 @@ public class SVideoStream implements AudioRecorder.Listener {
     }
     public StatsReport[] getStatsReport()
     {
-        return nativeGetStats();
+        synchronized (this) {
+            return nativeGetStats();
+        }
     }
     private long getClockDuration() {
         if (!isInStreaming() || mStartTime == 0) {
@@ -140,7 +142,10 @@ public class SVideoStream implements AudioRecorder.Listener {
     }
     public boolean isInStreaming()
     {
-        int state = getState();
+        int state = VideoStreamConstants.StreamState_NONE;
+        synchronized (this) {
+            state = getState();
+        }
         if (state == VideoStreamConstants.StreamState_STARTED || state == VideoStreamConstants.StreamState_STARTING)
         {
             return true;
@@ -263,13 +268,17 @@ public class SVideoStream implements AudioRecorder.Listener {
         }
         m_VideoFrameCount++;
         m_LastVideoPts = clockpts;
-        return nativeInputVideoData(vdata, vdata.remaining(), m_LastVideoPts);
+        synchronized (this) {
+            return nativeInputVideoData(vdata, vdata.remaining(), m_LastVideoPts);
+        }
     }
     public void destroyStream()
     {
         StopStream();
-        nativeDestroy();
-        m_NativeObject = 0;
+        synchronized (this) {
+            nativeDestroy();
+            m_NativeObject = 0;
+        }
     }
     public void setEventObserver(IStreamEventObserver observer)
     {
@@ -300,8 +309,10 @@ public class SVideoStream implements AudioRecorder.Listener {
         }
         mAudioSumSamples += size / 2;
         m_LastAudioPts = pts;
-        Log.d(TAG,"aduio pts = " + pts);
+//        Log.d(TAG,"aduio pts = " + pts);
+        synchronized (this) {
             nativeInputAudioData(buffer, size, pts);
+        }
     }
 
     boolean isStreamnNoErrorByEvent(int eventid)

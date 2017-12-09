@@ -63,6 +63,7 @@ public:
 	virtual sH264CodecInfo GetCodecInfo();
 
 	virtual EncoderRunTimeInfo GetRunTimeInfo() override;
+	~CVideoEncoderMediaCodec();
 
 };
 #endif 

@@ -139,7 +139,7 @@ public class VideoStreamProxy implements VideoFrameSource.OnVideoFrameComing {
     public void destroyStream()
     {
         mSVideoStream.destroyStream();
-        mSVideoStream = null;
+//        mSVideoStream = null;
     }
     @Override
     public void onVideoFrameComing(ByteBuffer framedata, int stride, int height) {

@@ -17,18 +17,19 @@
         android:paddingTop="17dp"
         android:paddingBottom="17dp">
 
-            <CheckBox
-                android:id="@+id/cb_cameraswitch"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_margin="5dp"
-                android:layout_alignParentRight="true"
-                android:gravity="center"
-                android:background="@color/white"
-                android:button="@null"
-                android:text="前"
-                android:visibility="invisible"
-                />
+        <Button
+            android:id="@+id/cb_cameraswitch"
+            android:layout_width="100dp"
+            android:layout_height="30dp"
+            android:layout_alignParentRight="true"
+            android:layout_margin="5dp"
+            android:textSize="10sp"
+            android:background="@color/white"
+            android:button="@null"
+            android:checked="false"
+            android:gravity="center"
+            android:text="switch camera"
+            android:visibility="visible" />
         <CheckBox
             android:id="@+id/cb_light"
             android:layout_width="30dp"

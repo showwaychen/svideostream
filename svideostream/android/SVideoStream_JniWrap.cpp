@@ -13,7 +13,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved)
 	JNIEnv *env = NULL;
 
 	SetJavaVM(vm);
-	LOGI << "version : "<<VERSION;
+	LOGI << "libsvideostream version : "<<VERSION;
 	CCommonSetting::SetLogLevel(rtc::LS_SENSITIVE);
 	if (0 == on_JNI_OnLoad(GetJavaVM(), JNI_VERSION_1_6))
 	{
@@ -67,15 +67,18 @@ static JNINativeMethod ls_nm[] = {
 	{ "nativeDestroy", "()V", reinterpret_cast<void*>(
 	&CSVideoStream_JniWrap::native_Destroy) }
 };
-CSVideoStream_JniWrap* CSVideoStream_JniWrap::GetInst(JNIEnv* jni, jobject j_object)
+std::shared_ptr<CSVideoStream_JniWrap> CSVideoStream_JniWrap::GetInst(JNIEnv* jni, jobject j_object)
 {
 	jclass j_class = jni->GetObjectClass(j_object);
 	jfieldID nativeobject_id = jni->GetFieldID(j_class, "m_NativeObject", "J");
 	MYCHECK_EXCEPTION(jni, "GetInst failed");
 	jlong j_p = jni->GetLongField(j_object, nativeobject_id);
 	MYCHECK_EXCEPTION(jni, "GetInst failed");
-
-	return reinterpret_cast<CSVideoStream_JniWrap*>(j_p);
+	if (j_p == 0)
+	{
+		return nullptr;
+	}
+	return *reinterpret_cast<std::shared_ptr<CSVideoStream_JniWrap>*>(j_p);
 }
 
 CRegisterNativeM CSVideoStream_JniWrap::s_registernm("cn/cxw/svideostreamlib/SVideoStream", ls_nm, ARRAYSIZE(ls_nm));
@@ -85,18 +88,18 @@ m_pVideoStream(new CSVideoStream)
 	m_jThiz = env->NewGlobalRef(thiz); 
 	jclass oclass = env->GetObjectClass(m_jThiz);
 	m_jEventCallback = env->GetMethodID(oclass, "nativeEventCallback", "(II)V");
-	m_pVideoStream->SetEventCallback(this);
 }
 
 jlong JNICALL CSVideoStream_JniWrap::newinstance(JNIEnv *env, jobject thiz)
 {
-	CSVideoStream_JniWrap* instance = new CSVideoStream_JniWrap(env, thiz);
+	std::shared_ptr<CSVideoStream_JniWrap>* instance = new std::shared_ptr<CSVideoStream_JniWrap>(new CSVideoStream_JniWrap(env, thiz));
+	(*instance)->Init();
 	return jlongFromPointer((void*)instance);
 }
 
 jint JNICALL CSVideoStream_JniWrap::nativeStart(JNIEnv *env, jobject thiz)
 {
-	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz); 
+	std::shared_ptr<CSVideoStream_JniWrap> instance = CSVideoStream_JniWrap::GetInst(env, thiz);
 	if (instance != nullptr)
 	{
 		return instance->StartStream();
@@ -106,7 +109,7 @@ jint JNICALL CSVideoStream_JniWrap::nativeStart(JNIEnv *env, jobject thiz)
 
 jint JNICALL CSVideoStream_JniWrap::nativeStop(JNIEnv *env, jobject thiz)
 {
-	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz);
+	std::shared_ptr<CSVideoStream_JniWrap> instance = CSVideoStream_JniWrap::GetInst(env, thiz);
 	if (instance != nullptr)
 	{
 		return instance->StopStream();
@@ -117,7 +120,7 @@ jint JNICALL CSVideoStream_JniWrap::nativeStop(JNIEnv *env, jobject thiz)
 
 void JNICALL CSVideoStream_JniWrap::nativeSetStreamType(JNIEnv *env, jobject thiz, jint type)
 {
-	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz);
+	std::shared_ptr<CSVideoStream_JniWrap> instance = CSVideoStream_JniWrap::GetInst(env, thiz);
 	if (instance != nullptr)
 	{
 		instance->m_pVideoStream->SetStreamType((StreamType)type);
@@ -126,7 +129,7 @@ void JNICALL CSVideoStream_JniWrap::nativeSetStreamType(JNIEnv *env, jobject thi
 
 void JNICALL CSVideoStream_JniWrap::nativeSetSrcType(JNIEnv *env, jobject thiz, jint type)
 {
-	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz);
+	std::shared_ptr<CSVideoStream_JniWrap>instance = CSVideoStream_JniWrap::GetInst(env, thiz);
 	if (instance != nullptr)
 	{
 		instance->m_pVideoStream->SetSrcType((SrcDataType)type);
@@ -135,7 +138,7 @@ void JNICALL CSVideoStream_JniWrap::nativeSetSrcType(JNIEnv *env, jobject thiz, 
 
 void JNICALL CSVideoStream_JniWrap::nativeSetSrcImageParams(JNIEnv *env, jobject thiz, jint format, jint stride, int width, int height)
 {
-	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz);
+	std::shared_ptr<CSVideoStream_JniWrap>instance = CSVideoStream_JniWrap::GetInst(env, thiz);
 	if (instance != nullptr)
 	{
 		instance->m_pVideoStream->SetSrcImageParams((ImageFormat)format, stride, width, height);
@@ -144,7 +147,7 @@ void JNICALL CSVideoStream_JniWrap::nativeSetSrcImageParams(JNIEnv *env, jobject
 
 void JNICALL CSVideoStream_JniWrap::nativeSetDstParams(JNIEnv *env, jobject thiz, int width, int height)
 {
-	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz);
+	std::shared_ptr<CSVideoStream_JniWrap>instance = CSVideoStream_JniWrap::GetInst(env, thiz);
 	if (instance != nullptr)
 	{
 		instance->m_pVideoStream->SetDstSize(width, height);
@@ -153,7 +156,7 @@ void JNICALL CSVideoStream_JniWrap::nativeSetDstParams(JNIEnv *env, jobject thiz
 
 void JNICALL CSVideoStream_JniWrap::nativeSetEncoderType(JNIEnv* env, jobject thiz, jint type)
 {
-	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz);
+	std::shared_ptr<CSVideoStream_JniWrap>instance = CSVideoStream_JniWrap::GetInst(env, thiz);
 	if (instance != nullptr)
 	{
 		instance->SetVideoEncoderType((CVideoEncoderFactory::VideoEncoderType)type);
@@ -162,7 +165,7 @@ void JNICALL CSVideoStream_JniWrap::nativeSetEncoderType(JNIEnv* env, jobject th
 
 void JNICALL CSVideoStream_JniWrap::nativeSetVideoEncodeParams(JNIEnv *env, jobject thiz, int bitrate, int fps)
 {
-	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz);
+	std::shared_ptr<CSVideoStream_JniWrap>instance = CSVideoStream_JniWrap::GetInst(env, thiz);
 	if (instance != nullptr)
 	{
 		instance->m_pVideoStream->SetVideoEncodeParams(bitrate, fps);
@@ -171,7 +174,7 @@ void JNICALL CSVideoStream_JniWrap::nativeSetVideoEncodeParams(JNIEnv *env, jobj
 
 void JNICALL CSVideoStream_JniWrap::nativeSetAudioParams(JNIEnv *env, jobject thiz, jint samplerate, jint channels, jint samplesize, jint bitrate)
 {
-	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz);
+	std::shared_ptr<CSVideoStream_JniWrap>instance = CSVideoStream_JniWrap::GetInst(env, thiz);
 	if (instance != nullptr)
 	{
 		instance->m_pVideoStream->SetAudioParams(samplerate, channels, samplesize, bitrate);
@@ -180,7 +183,7 @@ void JNICALL CSVideoStream_JniWrap::nativeSetAudioParams(JNIEnv *env, jobject th
 
 void JNICALL CSVideoStream_JniWrap::nativeSetRotation(JNIEnv *env, jobject thiz, int rotation)
 {
-	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz);
+	std::shared_ptr<CSVideoStream_JniWrap>instance = CSVideoStream_JniWrap::GetInst(env, thiz);
 	if (instance != nullptr)
 	{
 		instance->m_pVideoStream->SetRotation((RotationMode)rotation);
@@ -189,7 +192,7 @@ void JNICALL CSVideoStream_JniWrap::nativeSetRotation(JNIEnv *env, jobject thiz,
 
 void JNICALL CSVideoStream_JniWrap::nativeSetPublishUrl(JNIEnv *env, jobject thiz, jstring url)
 {
-	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz);
+	std::shared_ptr<CSVideoStream_JniWrap>instance = CSVideoStream_JniWrap::GetInst(env, thiz);
 	if (instance != nullptr)
 	{
 		instance->m_pVideoStream->SetPushlishUrl(env->GetStringUTFChars(url, JNI_FALSE));
@@ -198,7 +201,7 @@ void JNICALL CSVideoStream_JniWrap::nativeSetPublishUrl(JNIEnv *env, jobject thi
 
 void JNICALL CSVideoStream_JniWrap::nativeSetRecordPath(JNIEnv *env, jobject thiz, jstring filename)
 {
-	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz);
+	std::shared_ptr<CSVideoStream_JniWrap>instance = CSVideoStream_JniWrap::GetInst(env, thiz);
 	if (instance != nullptr)
 	{
 		instance->m_pVideoStream->SetRecordPath(env->GetStringUTFChars(filename, JNI_FALSE));
@@ -207,7 +210,7 @@ void JNICALL CSVideoStream_JniWrap::nativeSetRecordPath(JNIEnv *env, jobject thi
 
 void JNICALL CSVideoStream_JniWrap::nativeSetAudioEnable(JNIEnv *env, jobject thiz, jboolean isenable)
 {
-	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz);
+	std::shared_ptr<CSVideoStream_JniWrap>instance = CSVideoStream_JniWrap::GetInst(env, thiz);
 	if (instance != nullptr)
 	{
 		instance->m_pVideoStream->SetEnableAudio(isenable);
@@ -216,7 +219,7 @@ void JNICALL CSVideoStream_JniWrap::nativeSetAudioEnable(JNIEnv *env, jobject th
 
 jint JNICALL CSVideoStream_JniWrap::nativeInputVideoData(JNIEnv *env, jobject thiz, jobject bytebuffer, int size, long pts)
 {
-	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz);
+	std::shared_ptr<CSVideoStream_JniWrap>instance = CSVideoStream_JniWrap::GetInst(env, thiz);
 	if (instance != nullptr)
 	{
 		uint8_t *pData = (uint8_t*)env->GetDirectBufferAddress(bytebuffer);
@@ -231,7 +234,7 @@ jint JNICALL CSVideoStream_JniWrap::nativeInputVideoData(JNIEnv *env, jobject th
 
 jint JNICALL CSVideoStream_JniWrap::nativeInputAudioData(JNIEnv *env, jobject thiz, jbyteArray data, int size, long pts)
 {
-	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz);
+	std::shared_ptr<CSVideoStream_JniWrap>instance = CSVideoStream_JniWrap::GetInst(env, thiz);
 	if (instance != nullptr)
 	{
 		uint8_t *pData = (uint8_t *)env->GetByteArrayElements(data, 0);
@@ -244,7 +247,13 @@ jint JNICALL CSVideoStream_JniWrap::nativeInputAudioData(JNIEnv *env, jobject th
 
 void JNICALL CSVideoStream_JniWrap::native_Destroy(JNIEnv *env, jobject thiz)
 {
-	CSVideoStream_JniWrap *instance = GetInst(env, thiz);
+	jclass j_class = env->GetObjectClass(thiz);
+	jfieldID nativeobject_id = env->GetFieldID(j_class, "m_NativeObject", "J");
+	MYCHECK_EXCEPTION(env, "GetInst failed");
+	jlong j_p = env->GetLongField(thiz, nativeobject_id);
+	MYCHECK_EXCEPTION(env, "GetInst failed");
+
+	std::shared_ptr<CSVideoStream_JniWrap>* instance = reinterpret_cast<std::shared_ptr<CSVideoStream_JniWrap>*>(j_p);
 	if (instance != NULL)
 	{
 		delete instance;
@@ -255,16 +264,16 @@ void JNICALL CSVideoStream_JniWrap::native_Destroy(JNIEnv *env, jobject thiz)
 int CSVideoStream_JniWrap::StartStream()
 {
 	CCommonSetting::StartLeakMemDetect();
-	if (m_pVideoStream->GetAudioEnable() && m_pAudioEncoder.get() == nullptr)
+	if (m_pVideoStream->GetAudioEnable() && m_pAudioEncoder == nullptr)
 	{
-		m_pAudioEncoder.reset(new CAudioEncoderFdkaac());
+		m_pAudioEncoder = std::make_shared<CAudioEncoderFdkaac>();
 	}
 
 	SetAndConfigVideoEncoder();
 	
 	
-	m_pVideoStream->SetAudioCodec(m_pAudioEncoder.get());
-	m_pVideoStream->SetVideoCodec(m_pVideoEncoder.get());
+	m_pVideoStream->SetAudioCodec(m_pAudioEncoder);
+	m_pVideoStream->SetVideoCodec(m_pVideoEncoder);
 	return m_pVideoStream->StartStream(true);
 }
 
@@ -275,8 +284,8 @@ int CSVideoStream_JniWrap::StopStream()
 
 CSVideoStream_JniWrap::~CSVideoStream_JniWrap()
 {
-	m_pVideoStream->SetEventCallback(nullptr);
 	GetEnv(GetJavaVM())->DeleteGlobalRef(m_jThiz);
+	LOGW << "~CSVideoStream_JniWrap";
 }
 
 void CSVideoStream_JniWrap::OnStreamEvent(StreamEvent event, StreamError error)
@@ -326,7 +335,7 @@ public:
 };
 void JNICALL CSVideoStream_JniWrap::nativeSettingSet(JNIEnv *env, jobject thiz, jint key, jobject value)
 {
-	CSVideoStream_JniWrap *instance = GetInst(env, thiz);
+	std::shared_ptr<CSVideoStream_JniWrap>instance = GetInst(env, thiz);
 	if (instance != NULL)
 	{
 		if (key == SKV_H264ENCODERCONFIG)
@@ -402,7 +411,7 @@ public:
 };
 jobjectArray JNICALL CSVideoStream_JniWrap::nativeGetStats(JNIEnv *env, jobject thiz)
 {
-	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz);
+	std::shared_ptr<CSVideoStream_JniWrap>instance = CSVideoStream_JniWrap::GetInst(env, thiz);
 	if (instance != nullptr)
 	{
 		StatsReports reports;
@@ -419,7 +428,7 @@ jobjectArray JNICALL CSVideoStream_JniWrap::nativeGetStats(JNIEnv *env, jobject 
 
 jint JNICALL CSVideoStream_JniWrap::nativeGetState(JNIEnv *env, jobject thiz)
 {
-	CSVideoStream_JniWrap *instance = CSVideoStream_JniWrap::GetInst(env, thiz);
+	std::shared_ptr<CSVideoStream_JniWrap>instance = CSVideoStream_JniWrap::GetInst(env, thiz);
 	if (instance != nullptr)
 	{
 		return instance->m_pVideoStream->GetState();
@@ -431,7 +440,7 @@ void CSVideoStream_JniWrap::SetAndConfigVideoEncoder()
 {
 	static CVideoEncoderFactory::VideoEncoderType ls_eOldType = CVideoEncoderFactory::H264ENCODER_X264;
 	bool bneedset = false;
-	if (m_pVideoEncoder.get() ==  nullptr)
+	if (m_pVideoEncoder ==  nullptr)
 	{
 		bneedset = true;
 	}
@@ -444,7 +453,7 @@ void CSVideoStream_JniWrap::SetAndConfigVideoEncoder()
 	}
 	if (bneedset)
 	{
-		m_pVideoEncoder.reset(CVideoEncoderFactory::CreateVideoEncoder(m_eVideoEncoderType));
+		m_pVideoEncoder = CVideoEncoderFactory::CreateVideoEncoder(m_eVideoEncoderType);
 		ls_eOldType = m_eVideoEncoderType;
 	}
 	m_pVideoEncoder->SetConfigs(m_H264Configs);

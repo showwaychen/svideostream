@@ -4,16 +4,16 @@
 #include "../android/VideoEncoderMediaCodec.h"
 #endif
 
-CVideoEncoderBase* CVideoEncoderFactory::CreateVideoEncoder(VideoEncoderType type)
+std::shared_ptr<CVideoEncoderBase> CVideoEncoderFactory::CreateVideoEncoder(VideoEncoderType type)
 {
 	if (H264ENCODER_X264 == type)
 	{
-		return new CVideoEncoderX264();
+		return std::make_shared<CVideoEncoderX264>();
 	}
 #if defined(SVS_ANDROID)
 	else if (H264ENCODER_MEDIACODEC == type)
 	{
-		return new CVideoEncoderMediaCodec;
+		return std::make_shared<CVideoEncoderMediaCodec>();
 	}
 #endif
 	return nullptr;

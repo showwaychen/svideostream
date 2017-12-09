@@ -155,14 +155,13 @@ bool CVideoEncoderMediaCodec::OnEncodeThread()
 			<< std::hex << (int)payload[1] << "  " << std::hex << (int)payload[2] <<
 			"  " << std::hex << (int)payload[3] << " " << std::hex << (int)payload[4];
 			}*/
-			if (m_pCallBack != nullptr)
-			{
-				m_pCallBack->OnVideoEncodedData(payload, payload_size, pts, pts);
-			}
-			else
+			if (m_pCallBack.expired())
 			{
 				LOGW << "data encoded successfully but no callback funtion";
+
 			}
+			OnCallback(payload, payload_size, pts, pts);
+
 			//release outputbuffer 
 			jnienv->DeleteLocalRef(outputbuffer);
 			jnienv->DeleteLocalRef(bufferdata);
@@ -296,4 +295,10 @@ CVideoEncoderBase::EncoderRunTimeInfo CVideoEncoderMediaCodec::GetRunTimeInfo()
 	info.m_nBufferRemainNum = m_qVideoFrameQ.Size();
 	info.m_nEncodeAvgTimeMs = m_nAvgEncodedTimeMs;
 	return info;
+}
+
+CVideoEncoderMediaCodec::~CVideoEncoderMediaCodec()
+{
+	CloseEncoder();
+	LOGW << "~CVideoEncoderMediaCodec";
 }

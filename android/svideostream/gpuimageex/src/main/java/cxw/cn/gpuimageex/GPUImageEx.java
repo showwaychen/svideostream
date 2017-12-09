@@ -20,7 +20,7 @@ import cxw.cn.gpuimageex.util.TextureRotationUtil;
  * Created by cxw on 2017/11/5.
  */
 
-public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.CameraEventObserver, IPreviewView.IPreviewCallback {
+public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.CameraEventObserver, IPreviewView.IPreviewCallback, OpenglCapture.IFrameCaptured {
     static String TAG = GPUImageEx.class.getCanonicalName();
     static final float CUBE[] = {
             -1.0f, -1.0f,
@@ -43,6 +43,14 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
     @Override
     public void onSurfaceDestroyed(@NonNull IPreviewView.ISurfaceHolder holder) {
         stopPreview();
+    }
+
+    @Override
+    public void onPreviewFrame(ByteBuffer directFrameBuffer, int stride, int height, long ptsMS) {
+        if (mObserver != null)
+        {
+            mObserver.OnProcessingFrame(directFrameBuffer, stride, height);
+        }
     }
 
 
@@ -82,6 +90,9 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
     ByteBuffer mCaptureBuffer = null;
     static GPUImageEx sGPUImageEx = new GPUImageEx();
     IPreviewView mPreviewView = null;
+
+    //
+    GraphicBufferCapture mOpenglCapture = null;
     public static GPUImageEx getInst()
     {
         return sGPUImageEx;
@@ -105,6 +116,14 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
         mOffScreenTextureBuffer.put(TextureRotationUtil.TEXTURE_NO_ROTATION).position(0);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             mbUseImageReaderThread = true;
+//            mbUseImageReaderThread = false;
+
+        }
+        if (!mbUseImageReaderThread)
+        {
+            mOpenglCapture = new GraphicBufferCapture();
+            mOpenglCapture.setOnCapture(this);
+
         }
 
     }
@@ -274,6 +293,35 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
         mGlRenderThread.stopRender();
         mGlRenderThread = null;
     }
+
+    public void switchCamera()
+    {
+        boolean hasdoublecamera = hadFrontCamera() && hadBackCamera();
+        if (!hasdoublecamera)
+        {
+            Log.w(TAG, "only have one camera ,don't need to switch");
+            return ;
+        }
+        runOnDraw(new Runnable() {
+            @Override
+            public void run() {
+                mGPUImageCamera.switchCamera();
+            }
+        });
+//        boolean hascamera = isfront?hadFrontCamera():hadBackCamera();
+//        if (hascamera)
+//        {
+//            Log.w(TAG, "not have  designated camera");
+//            return ;
+//        }
+//        if (mGPUImageCamera.isFrontCamera() == isfront)
+//        {
+//            Log.w(TAG, "not need to switch");
+//            return ;
+//        }
+
+
+    }
     public boolean isFrontCamera() {
         return mGPUImageCamera.isFrontCamera();
     }
@@ -336,7 +384,11 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
                 mFilter.onOutputSizeChanged(mGPUImageCamera.getCameraFrameWidth(), mGPUImageCamera.getCameraFrameHeight());
             }
 
-            mCaptureBuffer = ByteBuffer.allocateDirect(mFrameBuffer.getFrameBufferHeight() * mFrameBuffer.getFrameBufferWidth() * 4);
+//            mCaptureBuffer = ByteBuffer.allocateDirect(mFrameBuffer.getFrameBufferHeight() * mFrameBuffer.getFrameBufferWidth() * 4);
+            if (!mbUseImageReaderThread)
+            {
+                mOpenglCapture.initCapture(mGPUImageCamera.getCameraFrameWidth(), mGPUImageCamera.getCameraFrameHeight());
+            }
 
         }
         int displaytextureid = -1;
@@ -360,15 +412,17 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
 
         if (!mbUseImageReaderThread && mObserver != null)
         {
-            long ptime = System.currentTimeMillis();
-            //???????
-            GLES20.glReadPixels(0, 0,
-                    mFrameBuffer.getFrameBufferWidth(), mFrameBuffer.getFrameBufferHeight(),
-                    GLES20.GL_RGBA,
-                    GLES20.GL_UNSIGNED_BYTE,
-                    mCaptureBuffer);
-//            Log.d(TAG, "glReadPixels time = " + (System.currentTimeMillis() - ptime));
-            mObserver.OnProcessingFrame(mCaptureBuffer, mFrameBuffer.getFrameBufferWidth() * 4, mFrameBuffer.getFrameBufferHeight());
+            mOpenglCapture.setTextureId(displaytextureid);
+            mOpenglCapture.onCapture();
+//            long ptime = System.currentTimeMillis();
+//            //???????
+//            GLES20.glReadPixels(0, 0,
+//                    mFrameBuffer.getFrameBufferWidth(), mFrameBuffer.getFrameBufferHeight(),
+//                    GLES20.GL_RGBA,
+//                    GLES20.GL_UNSIGNED_BYTE,
+//                    mCaptureBuffer);
+////            Log.d(TAG, "glReadPixels time = " + (System.currentTimeMillis() - ptime));
+//            mObserver.OnProcessingFrame(mCaptureBuffer, mFrameBuffer.getFrameBufferWidth() * 4, mFrameBuffer.getFrameBufferHeight());
         }
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
@@ -430,5 +484,9 @@ public class GPUImageEx implements GlRenderThread.GLRenderer, GPUImageExCamera.C
         }
         mDisplayFilter.destroy();
         mGPUImageCamera.stopPreview();
+        if (mOpenglCapture != null)
+        {
+            mOpenglCapture.destroy();
+        }
     }
 }

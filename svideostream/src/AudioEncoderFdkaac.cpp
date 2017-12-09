@@ -45,10 +45,11 @@ bool CAudioEncoderFdkaac::OnAudioEncoderThread()
 	uint8_t aacspecdata[2] = { 0x12, 0x08 }; //aot:2, 44100:4 channel:1
 
 	// Send spec data
-	if (m_pCallBack != nullptr)
+	/*if (m_pCallBack != nullptr)
 	{
 		m_pCallBack->OnAudioEncodedData(aacspecdata, 2, -1);
-	}
+	}*/
+	OnCallback(aacspecdata, 2, -1);
 	while (!m_bAbort)
 	{
 		std::unique_ptr<AudioFrame> audiodata;
@@ -66,7 +67,7 @@ bool CAudioEncoderFdkaac::OnAudioEncoderThread()
 		}
 		if (out_args.numOutBytes != 0)
 		{
-			m_pCallBack->OnAudioEncodedData(outbuf, out_args.numOutBytes, pts);
+			OnCallback(outbuf, out_args.numOutBytes, pts);
 
 		}
 	}
@@ -79,6 +80,12 @@ CAudioEncoderFdkaac::CAudioEncoderFdkaac() :
 m_hEncodeThread(this, &CAudioEncoderFdkaac::OnAudioEncoderThread, "aacencodethread")
 {
 	m_qFrameQ.SetMaxCount(3);
+}
+
+CAudioEncoderFdkaac::~CAudioEncoderFdkaac()
+{
+	CloseEncoder();
+	LOGW << "~CAudioEncoderFdkaac";
 }
 
 int CAudioEncoderFdkaac::OpenEncoder()

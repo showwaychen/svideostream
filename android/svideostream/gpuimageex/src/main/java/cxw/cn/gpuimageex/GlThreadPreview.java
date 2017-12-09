@@ -3,6 +3,8 @@ package cxw.cn.gpuimageex;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import static java.lang.Thread.State.RUNNABLE;
+
 /**
  * Created by user on 2017/11/15.
  */
@@ -25,9 +27,10 @@ public class GlThreadPreview extends GlRenderThread implements IPreviewView.IPre
     @Override
     public void onSurfaceCreated(@NonNull IPreviewView.ISurfaceHolder holder, int width, int height) {
         setSurface(holder.getSurface());
+        Log.d(TAG, "onSurfaceCreated");
         if (mNeedStartWhenCreate)
         {
-            start();
+            this.start();
         }
     }
 
@@ -48,10 +51,16 @@ public class GlThreadPreview extends GlRenderThread implements IPreviewView.IPre
 
     @Override
     public synchronized void start() {
+        Log.d(TAG, "start");
         if (mSurface == null)
         {
             Log.w(TAG,"surface hasn't created");
             mNeedStartWhenCreate = true;
+            return ;
+        }
+        if (getState() == RUNNABLE)
+        {
+            Log.w(TAG, "thread state is runnable");
             return ;
         }
         mNeedStartWhenCreate = false;

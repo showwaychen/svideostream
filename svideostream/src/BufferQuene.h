@@ -299,8 +299,7 @@ public:
 		}
 	}
 
-	typedef bool(*pfnCheckElementEx)(std::unique_ptr<T, Deleter>&);
-	bool ClearUtil(pfnCheckElementEx checkfun)
+	bool ClearUtil(std::function<bool(std::unique_ptr<T, Deleter>&)> checkfun)
 	{
 		bool isfind = false;
 		int clearsize = 0;
@@ -323,6 +322,33 @@ public:
 			ite++;
 		}
 		m_bufflist.erase(m_bufflist.begin(), ite);
+		m_writeableevent.Set();
+		LOGD << "ClearUtil end clear size = " << clearsize;
+
+		return isfind;
+	}
+	bool ClearUtilReverseFind(std::function<bool(std::unique_ptr<T, Deleter>&)> checkfun)
+	{
+		bool isfind = false;
+		int clearsize = 0;
+		rtc::CritScope autolock(&m_sect);
+
+		auto ite = m_bufflist.rbegin();
+		do 
+		{
+			if (!checkfun(*ite++))
+			{
+				clearsize++;
+
+			}
+			else
+			{
+				isfind = true;
+				break;
+			}
+		} while (ite != m_bufflist.rend());
+		
+		m_bufflist.erase(m_bufflist.begin(), ite.base());
 		m_writeableevent.Set();
 		LOGD << "ClearUtil end clear size = " << clearsize;
 

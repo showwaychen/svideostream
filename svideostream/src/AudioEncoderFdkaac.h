@@ -17,6 +17,7 @@ class CAudioEncoderFdkaac :public CAudioEncoderBase
 	CBufferQueneEx<AudioFrame> m_qFrameQ;
 public:
 	CAudioEncoderFdkaac();
+	~CAudioEncoderFdkaac();
 	virtual int OpenEncoder();
 
 	virtual int CloseEncoder();

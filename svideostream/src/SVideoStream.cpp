@@ -78,7 +78,7 @@ int CSVideoStream::StartStream(bool isasyn)
 	m_eState = StreamState_STARTING;
 	
 	ResetMembers();
-	m_pVideoEncoder->SetEncodedCallBack(this);
+	m_pVideoEncoder->SetEncodedCallBack(shared_from_this());
 	m_pVideoEncoder->SetVideoParams(m_nVideoDstWidth, m_nVideoDstHeight, m_nVideoBitrate, m_nVideoFrameRate);
 	m_pVideoEncoder->SetGop(m_nVideoFrameRate * m_nVideoKeyFrameInterval);
 	LOGI << "video encoder params width = " << m_nVideoDstWidth << " height = " << m_nVideoDstHeight << " bitrate = " << m_nVideoBitrate << " fps = " << m_nVideoFrameRate;
@@ -91,7 +91,7 @@ int CSVideoStream::StartStream(bool isasyn)
 	}
 	if (m_bAudioEnable)
 	{
-		m_pAudioEncoder->SetEncodedCallBack(this);
+		m_pAudioEncoder->SetEncodedCallBack(shared_from_this());
 		m_pAudioEncoder->SetAudioParams(m_nAudioSamplerate, m_nAudioSampleSize, m_nAudioChannels, 64000, 1024);
 		LOGI << "audio encoder params samplerate = " << m_nAudioSamplerate << " samplesize = " << m_nAudioSampleSize << " channels = " << m_nAudioChannels << " bitrate = 64000";
 		if (m_pAudioEncoder->OpenEncoder() != 0)
@@ -109,7 +109,7 @@ int CSVideoStream::StartStream(bool isasyn)
 	{
 		m_bIsLiveConnected = false;
 		m_pRtmpPublish->SetUrl(m_strPublishUrl);
-		m_pRtmpPublish->SetEventObserver(this);
+		m_pRtmpPublish->SetEventObserver(shared_from_this());
 		m_pRtmpPublish->SetH264CodecInfo(m_pVideoEncoder->GetCodecInfo());
 		if (m_bAudioEnable)
 		{
@@ -341,6 +341,7 @@ CSVideoStream::~CSVideoStream()
 {
 	StopStream();
 	m_tWorkThread.Stop();
+	LOGW << "~CSVideoStream";
 }
 
 void CSVideoStream::OnVideoEncodedData(uint8_t* data, int nsize, int64_t pts, int64_t dts)

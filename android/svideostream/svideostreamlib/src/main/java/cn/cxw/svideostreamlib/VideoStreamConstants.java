@@ -5,7 +5,7 @@ package cn.cxw.svideostreamlib;
  */
 
 public class VideoStreamConstants {
-    public static final  String VersionCode = "1.4";
+    public static final  String VersionCode = "1.5";
     //stream type
     public  static int ST_LIVE = 1;
     public static int ST_RECORD = 2;
