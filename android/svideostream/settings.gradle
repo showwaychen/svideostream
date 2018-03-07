@@ -1,1 +1,1 @@
-include ':app', ':svideostreamlib', ':gpuimageex'
+include ':app', ':svideostreamlib', ':screenlive', ':magiccameralive'

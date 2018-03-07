@@ -17,7 +17,7 @@
         android:paddingTop="17dp"
         android:paddingBottom="17dp">
 
-        <Button
+        <CheckBox
             android:id="@+id/cb_cameraswitch"
             android:layout_width="100dp"
             android:layout_height="30dp"

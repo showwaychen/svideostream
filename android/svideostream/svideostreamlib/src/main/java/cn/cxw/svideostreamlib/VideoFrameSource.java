@@ -37,7 +37,7 @@ public abstract class VideoFrameSource {
     {
         mObserver = new WeakReference<VideoFrameSourceObserver>(cb);
     }
-    void NotifyObserver()
+    protected  void NotifyObserver()
     {
         if (mObserver != null)
         {

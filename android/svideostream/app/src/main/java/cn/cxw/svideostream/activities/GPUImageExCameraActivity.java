@@ -16,6 +16,7 @@ import android.widget.FrameLayout;
 import android.widget.TableLayout;
 import android.widget.Toast;
 
+import cn.cxw.magiccameralive.MagicCameraFrameSource;
 import cn.cxw.svideostream.R;
 import cn.cxw.svideostream.application.GlobalSetting;
 import cn.cxw.svideostream.application.GlobalVideoStream;
@@ -23,7 +24,6 @@ import cn.cxw.svideostream.application.MainApplication;
 import cn.cxw.svideostream.widget.InfoHudViewHolder;
 import cn.cxw.svideostream.widget.SurfaceViewPreview;
 import cn.cxw.svideostreamlib.CommonSetting;
-import cn.cxw.svideostreamlib.GPUImageExFrameSource;
 import cn.cxw.svideostreamlib.SVideoStream;
 import cn.cxw.svideostreamlib.VideoFrameSource;
 import cn.cxw.svideostreamlib.VideoStreamConstants;
@@ -55,7 +55,8 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
     TableLayout mHudView = null;
     InfoHudViewHolder mHudViewHolder = null;
 
-    GPUImageExFrameSource mGPUVideoSource = null;
+//    GPUImageExFrameSource mGPUVideoSource = null;
+    MagicCameraFrameSource mMagicCmaeraSource = null;
     VideoStreamProxy mVideoStream = GlobalVideoStream.getGPUImageSourceOwn();
     Handler mHandlerTimer = null;
     @Override
@@ -113,16 +114,24 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
             };
         };
         CommonSetting.nativeSetLogLevel(VideoStreamConstants.LS_INFO);
-        mGPUVideoSource = new GPUImageExFrameSource();
+//        mGPUVideoSource = new GPUImageExFrameSource();
+        mMagicCmaeraSource = new MagicCameraFrameSource();
 //        m_cbCameraSwitch.setVisibility((mGPUVideoSource.hasBackCamera() && mGPUVideoSource.hasFrontCamera())?View.VISIBLE:View.INVISIBLE);
-        m_cbCameraSwitch.setEnabled((mGPUVideoSource.hasBackCamera() && mGPUVideoSource.hasFrontCamera())?true:false);
-        mGPUVideoSource.setObserver(this);
-        mVideoStream.setVideoFrameSource(mGPUVideoSource);
+//        m_cbCameraSwitch.setEnabled((mGPUVideoSource.hasBackCamera() && mGPUVideoSource.hasFrontCamera())?true:false);
+        m_cbCameraSwitch.setEnabled(true);
+
+//        mGPUVideoSource.setObserver(this);
+        mMagicCmaeraSource.setObserver(this);
+//        mVideoStream.setVideoFrameSource(mGPUVideoSource);
+        mVideoStream.setVideoFrameSource(mMagicCmaeraSource);
+
         mVideoStream.setStreamEventObserver(this);
 //        Log.d(TAG, MainApplication.getInstance().getSetting().getH264EncoderConfigs().toString());
         mVideoStream.setVideoStreamSetting(MainApplication.getInstance().getSetting());
-        mGPUVideoSource.setCameraSize(640, 480);
-        mGPUVideoSource.setPreviewView(m_svDisplay);
+//        mGPUVideoSource.setCameraSize(640, 480);
+//        mGPUVideoSource.setPreviewView(m_svDisplay);
+        mMagicCmaeraSource.setCameraSize(640, 480);
+        mMagicCmaeraSource.setPreviewView(m_svDisplay);
     }
     int  StartStream(boolean islive)
     {
@@ -141,7 +150,6 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
         else
         {
             mVideoStream.setRecordPath(GlobalSetting.getRecordPath() + "svideostream_camera.mp4");
-
         }
         return mVideoStream.startStream();
     }
@@ -163,9 +171,11 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
         super.onDestroy();
         mVideoStream.stopStream();
         mVideoStream.setStreamEventObserver(null);
-        mGPUVideoSource.setObserver(null);
+        mMagicCmaeraSource.setObserver(null);
+//        mGPUVideoSource.setObserver(null);
 //        mGPUVideoSource.stopPreview();
-        mGPUVideoSource.setPreviewView(null);
+//        mGPUVideoSource.setPreviewView(null);
+        mMagicCmaeraSource.setPreviewView(null);
 //        GlobalVideoStream.destroyGlobalVideoStream();
     }
     // 获取电源锁
@@ -202,9 +212,13 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
                 GPUImageFilterTools.showDialog(this, new GPUImageFilterTools.OnBeautyEnableListener() {
                     @Override
                     public void onBeautyEnable(boolean isenable) {
-                        if (mGPUVideoSource != null)
+//                        if (mGPUVideoSource != null)
+//                        {
+//                            mGPUVideoSource.enableBeatyFilter(isenable);
+//                        }
+                        if (mMagicCmaeraSource != null)
                         {
-                            mGPUVideoSource.enableBeatyFilter(isenable);
+                            mMagicCmaeraSource.enableBeatyFilter(isenable);
                         }
                     }
                 });
@@ -261,9 +275,9 @@ public class GPUImageExCameraActivity extends AppCompatActivity implements View.
                 }
                 break;
             case R.id.cb_cameraswitch:
-                if (mGPUVideoSource != null)
+                if (mMagicCmaeraSource != null)
                 {
-                    mGPUVideoSource.switchCamera();
+                    mMagicCmaeraSource.switchCamera();
                 }
                 break;
         }

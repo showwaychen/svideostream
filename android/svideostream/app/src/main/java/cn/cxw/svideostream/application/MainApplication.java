@@ -5,6 +5,8 @@ import android.app.Application;
 import com.squareup.leakcanary.LeakCanary;
 import com.squareup.leakcanary.RefWatcher;
 
+import cn.cxw.magiccameralib.MagicCamera;
+
 /**
  * Created by user on 2017/11/3.
  */
@@ -23,6 +25,7 @@ public class MainApplication extends Application {
             return;
         }
         mRefWatcher = LeakCanary.install(this);
+        MagicCamera.getInst().setContext(this);
     }
     public static MainApplication getInstance() {
         return instance;

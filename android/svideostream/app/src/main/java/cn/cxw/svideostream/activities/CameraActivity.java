@@ -12,14 +12,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import cn.cxw.androidcomutils.PermissionCheck;
 import cn.cxw.svideostream.R;
 import cn.cxw.svideostream.application.MainApplication;
-import cn.cxw.svideostream.utils.PermissionCheck;
 import cn.cxw.svideostreamlib.Camera.CameraInfo;
 import cn.cxw.svideostreamlib.CameraVideoStream;
 
@@ -33,7 +32,7 @@ public class CameraActivity  extends AppCompatActivity implements View.OnClickLi
 
     CheckBox m_cbRecord = null;
     CheckBox mcbLive = null;
-    Button m_cbCameraSwitch = null;
+    CheckBox m_cbCameraSwitch = null;
     CheckBox m_cbLight = null;
     SurfaceView m_svDisplay = null;
     FrameLayout mflCamera = null;
@@ -62,7 +61,7 @@ public class CameraActivity  extends AppCompatActivity implements View.OnClickLi
     void InitView()
     {
         mflCamera = (FrameLayout)findViewById(R.id.fl_camera);
-        m_cbCameraSwitch = (Button)findViewById(R.id.cb_cameraswitch);
+        m_cbCameraSwitch = (CheckBox)findViewById(R.id.cb_cameraswitch);
         m_cbLight = (CheckBox)findViewById(R.id.cb_light);
         m_cbRecord = (CheckBox)findViewById(R.id.cb_record);
         m_svDisplay = new SurfaceView(this);
@@ -224,8 +223,8 @@ public class CameraActivity  extends AppCompatActivity implements View.OnClickLi
         {
             case R.id.cb_cameraswitch:
 
-//                m_CameraVideoStream.switchCamera(m_cbCameraSwitch.isChecked()? Camera.CameraInfo.CAMERA_FACING_BACK: Camera.CameraInfo.CAMERA_FACING_FRONT);
-//                m_cbCameraSwitch.setText(m_cbCameraSwitch.isChecked()?"后":"前");
+                m_CameraVideoStream.switchCamera(m_cbCameraSwitch.isChecked()? Camera.CameraInfo.CAMERA_FACING_BACK: Camera.CameraInfo.CAMERA_FACING_FRONT);
+                m_cbCameraSwitch.setText(m_cbCameraSwitch.isChecked()?"后":"前");
                 break;
             case R.id.cb_light:
                 break;
@@ -234,7 +233,7 @@ public class CameraActivity  extends AppCompatActivity implements View.OnClickLi
                 {
                     if (0 != StartStream(false))
                     {
-//                        m_cbCameraSwitch.setChecked(false);
+                        m_cbCameraSwitch.setChecked(false);
                         m_cbRecord.setText("开始录制");
                     }
                     m_cbRecord.setText("停止录制");

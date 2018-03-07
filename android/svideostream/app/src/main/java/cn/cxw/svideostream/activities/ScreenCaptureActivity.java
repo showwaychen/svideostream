@@ -14,13 +14,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import cn.cxw.androidcomutils.PermissionCheck;
+import cn.cxw.screenlive.ScreenVideoFrameSource;
 import cn.cxw.svideostream.R;
 import cn.cxw.svideostream.application.GlobalVideoStream;
 import cn.cxw.svideostream.application.StreamService;
-import cn.cxw.svideostream.utils.PermissionCheck;
-import cn.cxw.svideostreamlib.CommonSetting;
-import cn.cxw.svideostreamlib.ScreenVideoFrameSource;
-import cn.cxw.svideostreamlib.VideoStreamConstants;
 import cn.cxw.svideostreamlib.VideoStreamProxy;
 
 /**

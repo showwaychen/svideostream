@@ -11,7 +11,9 @@ import android.view.View;
 import java.util.HashSet;
 import java.util.Set;
 
-import cxw.cn.gpuimageex.IPreviewView;
+import cn.cxw.openglesutils.glthread.IPreviewView;
+
+//import cxw.cn.gpuimageex.IPreviewView;
 
 /**
  * Created by cxw on 2017/11/7.

@@ -5,13 +5,14 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import cn.cxw.androidcomutils.PermissionCheck;
 import cn.cxw.svideostream.activities.GPUImageExCameraActivity;
 import cn.cxw.svideostream.activities.ScreenCaptureActivity;
 import cn.cxw.svideostream.activities.SettingActivity;
-import cn.cxw.svideostream.utils.PermissionCheck;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -20,7 +21,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         InitView();
-        PermissionCheck.Check(this, Manifest.permission.WRITE_EXTERNAL_STORAGE, PermissionCheck.MY_PERMISSIONS_REQUEST_OK);
+        int writePermission = PermissionCheck.Check(this, Manifest.permission.WRITE_EXTERNAL_STORAGE, PermissionCheck.MY_PERMISSIONS_REQUEST_OK);
+        Log.d("test", "" + writePermission);
+        if(PermissionCheck.USEREJECT_NOTIPS == writePermission)
+        {
+            Toast.makeText(this, "未获取写文件权限。", Toast.LENGTH_SHORT);
+        }
     }
     void InitView()
     {
