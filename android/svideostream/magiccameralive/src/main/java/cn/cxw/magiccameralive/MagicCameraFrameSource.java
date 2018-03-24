@@ -41,12 +41,12 @@ public class MagicCameraFrameSource extends VideoFrameSource implements MagicCam
 
     @Override
     public int getSrcWidth() {
-        return mMagicCamera.getOutputWidth();
+        return mMagicCamera.getFrameWidth();
     }
 
     @Override
     public int getSrcHeight() {
-        return mMagicCamera.getOutputHeight();
+        return mMagicCamera.getFrameHeight();
     }
 
     @Override

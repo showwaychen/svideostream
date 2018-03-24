@@ -57,5 +57,5 @@ dependencies {
 //    compile project(path: ':gpuimglive')
     compile project(path: ':screenlive')
     compile project(path: ':magiccameralive')
-    compile(name: 'magiccameralib-1.1', ext: 'aar')
+    compile(name: 'magiccameralib-2.1', ext: 'aar')
 }
